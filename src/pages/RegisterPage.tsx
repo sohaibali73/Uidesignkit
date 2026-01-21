@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import yellowLogo from '@/assets/yellowlogo.png';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+
 export function RegisterPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -102,7 +104,7 @@ export function RegisterPage() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8000/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

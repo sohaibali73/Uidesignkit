@@ -16,6 +16,8 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import yellowLogo from '@/assets/yellowlogo.png';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -108,7 +110,7 @@ export function ReverseEngineerPage() {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:8000/reverse-engineer/start', {
+      const response = await fetch(`${API_BASE_URL}/reverse-engineer/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +162,7 @@ export function ReverseEngineerPage() {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch('http://localhost:8000/reverse-engineer/continue', {
+      const response = await fetch(`${API_BASE_URL}/reverse-engineer/continue`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,7 +207,7 @@ export function ReverseEngineerPage() {
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8000/reverse-engineer/schematic/${strategyId}`, {
+      const response = await fetch(`${API_BASE_URL}/reverse-engineer/schematic/${strategyId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +253,7 @@ RISK MANAGEMENT
 
     try {
       const token = localStorage.getItem('auth_token');
-      const response = await fetch(`http://localhost:8000/reverse-engineer/generate-code/${strategyId}`, {
+      const response = await fetch(`${API_BASE_URL}/reverse-engineer/generate-code/${strategyId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

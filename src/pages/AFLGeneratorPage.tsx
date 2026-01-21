@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Sparkles, Copy, Check, Download, Bug, Lightbulb, Zap, Loader2 } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+
 export function AFLGeneratorPage() {
   const [prompt, setPrompt] = useState('');
   const [strategyType, setStrategyType] = useState('standalone');
@@ -21,7 +23,7 @@ export function AFLGeneratorPage() {
       // Get token from localStorage
       const token = localStorage.getItem('auth_token');
       
-      const response = await fetch('http://localhost:8000/afl/generate', {
+      const response = await fetch(`${API_BASE_URL}/afl/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
