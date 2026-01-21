@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';  // Named import
-import MainLayout  from './layouts/MainLayout';              // Named import
+import { MainLayout } from './layouts/MainLayout';              // Named import
 
 // Page imports - all named imports except ReverseEngineerPage
 import { LoginPage } from './pages/LoginPage';
