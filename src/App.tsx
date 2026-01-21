@@ -11,7 +11,7 @@ import { AFLGeneratorPage } from './pages/AFLGeneratorPage';
 import { ChatPage } from './pages/ChatPage';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { BacktestPage } from './pages/BacktestPage';
-import ReverseEngineerPage from './pages/ReverseEngineerPage';  // Default import
+import { ReverseEngineerPage } from './pages/ReverseEngineerPage';  // Named import
 import { SettingsPage } from './pages/SettingsPage';
 
 // Add this route inside the protected routes:
