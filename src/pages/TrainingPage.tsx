@@ -578,8 +578,8 @@ export default function TrainingPage() {
 
             {/* Suggestions Tab */}
             <TabsContent value="suggestions">
-              <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>Your Training Suggestions</h2>
+              <div className="bg-[#1E1E1E] border border-[#424242] rounded-xl p-5">
+                <h2 className="font-['Rajdhani'] text-lg font-semibold text-white mb-4 tracking-wide">Your Training Suggestions</h2>
                 <p style={{ color: '#9E9E9E', marginBottom: '16px', fontSize: '14px' }}>
                   {data.suggestions.length} suggestion{data.suggestions.length !== 1 ? 's' : ''} made
                 </p>
@@ -587,10 +587,10 @@ export default function TrainingPage() {
                 {data.suggestions.length > 0 ? (
                   <div style={{ display: 'grid', gap: '12px' }}>
                     {data.suggestions.map((suggestion) => (
-                      <div key={suggestion.id} style={{ ...styles.knowledgeCard, backgroundColor: '#2A2A2A', cursor: 'default' }}>
+                      <div key={suggestion.id} className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4">
                         <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '8px' }}>
                           <h3 style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 600, flex: 1 }}>{suggestion.title}</h3>
-                          <span style={getSuggestionBadgeStyle(suggestion.status)}>{suggestion.status}</span>
+                          {getSuggestionBadge(suggestion.status)}
                         </div>
                         {suggestion.description && (
                           <p style={{ color: '#9E9E9E', fontSize: '13px', marginBottom: '8px' }}>{suggestion.description}</p>
@@ -638,8 +638,8 @@ export default function TrainingPage() {
 
             {/* Feedback Tab */}
             <TabsContent value="feedback">
-              <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>Your Feedback</h2>
+              <div className="bg-[#1E1E1E] border border-[#424242] rounded-xl p-5">
+                <h2 className="font-['Rajdhani'] text-lg font-semibold text-white mb-4 tracking-wide">Your Feedback</h2>
                 <p style={{ color: '#9E9E9E', marginBottom: '16px', fontSize: '14px' }}>
                   {data.feedback.length} feedback submission{data.feedback.length !== 1 ? 's' : ''}
                 </p>
@@ -647,7 +647,7 @@ export default function TrainingPage() {
                 {data.feedback.length > 0 ? (
                   <div style={{ display: 'grid', gap: '12px' }}>
                     {data.feedback.map((fb) => (
-                      <div key={fb.id} style={{ ...styles.knowledgeCard, backgroundColor: '#2A2A2A', cursor: 'default' }}>
+                      <div key={fb.id} className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                           {getFeedbackIcon(fb.feedback_type)}
                           <span style={{ color: '#9E9E9E', fontSize: '12px', fontWeight: 600 }}>{fb.feedback_type}</span>
