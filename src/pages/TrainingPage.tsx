@@ -24,7 +24,6 @@ import {
   TrainingSuggestion,
 } from '@/types/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -433,18 +432,18 @@ export default function TrainingPage() {
                 )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                  <Button onClick={() => setShowTestDialog(true)} style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '12px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button onClick={() => setShowTestDialog(true)} style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', letterSpacing: '0.5px' }}>
                     <Play style={{ width: '16px', height: '16px' }} />
                     Test Training
-                  </Button>
-                  <Button onClick={() => setShowSuggestDialog(true)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '12px 20px', borderRadius: '8px', border: '1px solid #FEC00F44', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  </button>
+                  <button onClick={() => setShowSuggestDialog(true)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '12px 24px', borderRadius: '8px', border: '1px solid #424242', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', letterSpacing: '0.5px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#FEC00F'; e.currentTarget.style.color = '#FEC00F'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#424242'; e.currentTarget.style.color = '#FFFFFF'; }}>
                     <Lightbulb style={{ width: '16px', height: '16px' }} />
                     Suggest Training
-                  </Button>
-                  <Button onClick={() => setShowFeedbackDialog(true)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '12px 20px', borderRadius: '8px', border: '1px solid #FEC00F44', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  </button>
+                  <button onClick={() => setShowFeedbackDialog(true)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '12px 24px', borderRadius: '8px', border: '1px solid #424242', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', letterSpacing: '0.5px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#FEC00F'; e.currentTarget.style.color = '#FEC00F'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#424242'; e.currentTarget.style.color = '#FFFFFF'; }}>
                     <MessageCircle style={{ width: '16px', height: '16px' }} />
                     Submit Feedback
-                  </Button>
+                  </button>
                 </div>
               </div>
             </TabsContent>
@@ -458,9 +457,9 @@ export default function TrainingPage() {
                   <label style={{ color: '#FFFFFF', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Prompt</label>
                   <Textarea value={testPrompt} onChange={(e) => setTestPrompt(e.target.value)} placeholder="e.g., Create a moving average crossover strategy" style={{ ...styles.inputField, minHeight: '80px' }} />
                 </div>
-                <Button onClick={handleTestTraining} disabled={isTesting} style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: isTesting ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", opacity: isTesting ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button onClick={handleTestTraining} disabled={isTesting} style={{ backgroundColor: isTesting ? '#424242' : '#FEC00F', color: isTesting ? '#757575' : '#212121', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: isTesting ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.5px', opacity: isTesting ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}>
                   {isTesting ? <><Loader style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />Testing...</> : <><Play style={{ width: '16px', height: '16px' }} />Run Test</>}
-                </Button>
+                </button>
                 {testResult && (
                   <div style={{ marginTop: '24px' }}>
                     <h3 style={{ color: '#FFFFFF', fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Test Results</h3>
@@ -496,9 +495,9 @@ export default function TrainingPage() {
                 <p style={{ color: '#9E9E9E', marginBottom: '16px', fontSize: '14px' }}>Search training examples, rules, and patterns</p>
                 <div style={{ display: 'grid', gap: '12px', marginBottom: '24px' }}>
                   <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSearch()} placeholder="Search training examples, patterns, rules..." style={{ ...styles.inputField }} />
-                  <Button onClick={handleSearch} disabled={isSearching} style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: isSearching ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '13px', opacity: isSearching ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button onClick={handleSearch} disabled={isSearching} style={{ backgroundColor: isSearching ? '#424242' : '#FEC00F', color: isSearching ? '#757575' : '#212121', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: isSearching ? 'not-allowed' : 'pointer', fontWeight: 600, fontSize: '13px', letterSpacing: '0.5px', opacity: isSearching ? 0.6 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                     {isSearching ? <><Loader style={{ width: '14px', height: '14px', animation: 'spin 1s linear infinite' }} />Searching...</> : <><Search style={{ width: '14px', height: '14px' }} />Search</>}
-                  </Button>
+                  </button>
                 </div>
                 {data.knowledgeResults.length > 0 && (
                   <div style={styles.grid}>
@@ -553,9 +552,9 @@ export default function TrainingPage() {
                   <div style={{ textAlign: 'center', padding: '40px', color: '#9E9E9E' }}>
                     <Lightbulb style={{ width: '32px', height: '32px', marginBottom: '12px', opacity: 0.5, display: 'inline-block' }} />
                     <p>No suggestions yet. Help improve the training by suggesting examples!</p>
-                    <Button onClick={() => setShowSuggestDialog(true)} style={{ marginTop: '16px', backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
+                    <button onClick={() => setShowSuggestDialog(true)} style={{ marginTop: '16px', backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.5px' }}>
                       Create First Suggestion
-                    </Button>
+                    </button>
                   </div>
                 )}
               </div>
@@ -588,9 +587,9 @@ export default function TrainingPage() {
                   <div style={{ textAlign: 'center', padding: '40px', color: '#9E9E9E' }}>
                     <MessageCircle style={{ width: '32px', height: '32px', marginBottom: '12px', opacity: 0.5, display: 'inline-block' }} />
                     <p>No feedback submitted yet. Share your thoughts about generated code!</p>
-                    <Button onClick={() => setShowFeedbackDialog(true)} style={{ marginTop: '16px', backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px' }}>
+                    <button onClick={() => setShowFeedbackDialog(true)} style={{ marginTop: '16px', backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '13px', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.5px' }}>
                       Submit Feedback
-                    </Button>
+                    </button>
                   </div>
                 )}
               </div>
@@ -610,12 +609,12 @@ export default function TrainingPage() {
                 <Textarea value={testPrompt} onChange={(e) => setTestPrompt(e.target.value)} placeholder="e.g., Create a moving average crossover strategy" style={{ ...styles.inputField, minHeight: '80px' }} />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Button onClick={() => setShowTestDialog(false)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setShowTestDialog(false)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: '0.5px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#3A3A3A'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#424242'; }}>
                   Cancel
-                </Button>
-                <Button onClick={handleTestTraining} disabled={isTesting} style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: isTesting ? 'not-allowed' : 'pointer', opacity: isTesting ? 0.6 : 1 }}>
+                </button>
+                <button onClick={handleTestTraining} disabled={isTesting} style={{ backgroundColor: isTesting ? '#424242' : '#FEC00F', color: isTesting ? '#757575' : '#212121', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: isTesting ? 'not-allowed' : 'pointer', opacity: isTesting ? 0.6 : 1, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: '0.5px', transition: 'all 0.2s' }}>
                   Run Test
-                </Button>
+                </button>
               </div>
             </div>
           </DialogContent>
@@ -649,12 +648,12 @@ export default function TrainingPage() {
                 <Textarea value={suggestForm.reason} onChange={(e) => setSuggestForm({ ...suggestForm, reason: e.target.value })} placeholder="Explain why the AI needs to learn this" style={{ ...styles.inputField, minHeight: '60px' }} />
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Button onClick={() => setShowSuggestDialog(false)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setShowSuggestDialog(false)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: '0.5px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#3A3A3A'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#424242'; }}>
                   Cancel
-                </Button>
-                <Button onClick={handleSubmitSuggestion} disabled={isSubmitting} style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.6 : 1 }}>
+                </button>
+                <button onClick={handleSubmitSuggestion} disabled={isSubmitting} style={{ backgroundColor: isSubmitting ? '#424242' : '#FEC00F', color: isSubmitting ? '#757575' : '#212121', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.6 : 1, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: '0.5px', transition: 'all 0.2s' }}>
                   Submit
-                </Button>
+                </button>
               </div>
             </div>
           </DialogContent>
@@ -695,12 +694,12 @@ export default function TrainingPage() {
                 </select>
               </div>
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <Button onClick={() => setShowFeedbackDialog(false)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                <button onClick={() => setShowFeedbackDialog(false)} style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: '0.5px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#3A3A3A'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#424242'; }}>
                   Cancel
-                </Button>
-                <Button onClick={handleSubmitFeedback} disabled={isSubmitting} style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.6 : 1 }}>
+                </button>
+                <button onClick={handleSubmitFeedback} disabled={isSubmitting} style={{ backgroundColor: isSubmitting ? '#424242' : '#FEC00F', color: isSubmitting ? '#757575' : '#212121', padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: isSubmitting ? 'not-allowed' : 'pointer', opacity: isSubmitting ? 0.6 : 1, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: '0.5px', transition: 'all 0.2s' }}>
                   Submit
-                </Button>
+                </button>
               </div>
             </div>
           </DialogContent>
