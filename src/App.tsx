@@ -14,10 +14,8 @@ import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { BacktestPage } from './pages/BacktestPage';
 import { ReverseEngineerPage } from './pages/ReverseEngineerPage';  // Named import
 import { SettingsPage } from './pages/SettingsPage';
-import AdminPage from './pages/AdminPage';
 import TrainingPage from './pages/TrainingPage';
-
-// Add this route inside the protected routes:
+import { AdminPage } from './pages/AdminPage';
 
 
 

@@ -11,43 +11,35 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Lock,
   BookOpen,
+  Lock,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import yellowLogo from '@/assets/yellowlogo.png';
 import blackLogo from '@/assets/blacklogo.png';
 
-const getNavItems = (isAdmin: boolean) => {
-  const baseItems = [
-    { name: 'DASHBOARD', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'AFL GENERATOR', href: '/afl-generator', icon: Code2 },
-    { name: 'CHAT', href: '/chat', icon: MessageCircle },
-    { name: 'TRAINING', href: '/training', icon: BookOpen },
-    { name: 'SETTINGS', href: '/settings', icon: Settings },
-    { name: 'KNOWLEDGE BASE', href: '/knowledge-base', icon: Database },
-    { name: 'BACKTEST', href: '/backtest', icon: TrendingUp },
-    { name: 'REVERSE ENGINEER', href: '/reverse-engineer', icon: Zap },
-  ];
-  
-  if (isAdmin) {
-    baseItems.push({ name: 'ADMIN', href: '/admin', icon: Lock });
-  }
-  
-  return baseItems;
-};
+const navItems = [
+  { name: 'DASHBOARD', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'AFL GENERATOR', href: '/afl-generator', icon: Code2 },
+  { name: 'CHAT', href: '/chat', icon: MessageCircle },
+  { name: 'TRAINING', href: '/training', icon: BookOpen },
+  { name: 'KNOWLEDGE BASE', href: '/knowledge-base', icon: Database },
+  { name: 'BACKTEST', href: '/backtest', icon: TrendingUp },
+  { name: 'REVERSE ENGINEER', href: '/reverse-engineer', icon: Zap },
+  { name: 'ADMIN', href: '/admin', icon: Lock },
+  { name: 'SETTINGS', href: '/settings', icon: Settings },
+];
 
 export function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const { resolvedTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
 
   const sidebarWidth = collapsed ? 80 : 256;
   const isDark = resolvedTheme === 'dark';
-  const navItems = getNavItems(isAdmin);
 
   // Theme-aware colors
   const colors = {

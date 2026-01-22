@@ -203,7 +203,7 @@ export function AFLGeneratorPage() {
             disabled={loading || !prompt.trim()}
             style={{
               width: '100%',
-              height: '44px',
+              height: '48px',
               backgroundColor: loading || !prompt.trim() ? '#424242' : '#FEC00F',
               border: 'none',
               borderRadius: '8px',
@@ -211,13 +211,12 @@ export function AFLGeneratorPage() {
               fontSize: '14px',
               fontFamily: "'Rajdhani', sans-serif",
               fontWeight: 600,
-              letterSpacing: '1px',
+              letterSpacing: '0.5px',
               cursor: loading || !prompt.trim() ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              transition: 'all 0.2s',
             }}
           >
             {loading ? (
@@ -305,26 +304,12 @@ export function AFLGeneratorPage() {
                     padding: '8px 16px',
                     backgroundColor: copied ? '#2D7F3E' : 'transparent',
                     border: `1px solid ${copied ? '#2D7F3E' : '#424242'}`,
-                    borderRadius: '8px',
-                    color: copied ? '#FFFFFF' : '#FFFFFF',
-                    fontSize: '13px',
+                    borderRadius: '6px',
+                    color: '#FFFFFF',
+                    fontSize: '12px',
                     fontFamily: "'Rajdhani', sans-serif",
                     fontWeight: 600,
-                    letterSpacing: '0.5px',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!copied) {
-                      e.currentTarget.style.borderColor = '#FEC00F';
-                      e.currentTarget.style.color = '#FEC00F';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!copied) {
-                      e.currentTarget.style.borderColor = '#424242';
-                      e.currentTarget.style.color = '#FFFFFF';
-                    }
                   }}
                 >
                   {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -339,22 +324,12 @@ export function AFLGeneratorPage() {
                     padding: '8px 16px',
                     backgroundColor: 'transparent',
                     border: '1px solid #424242',
-                    borderRadius: '8px',
+                    borderRadius: '6px',
                     color: '#FFFFFF',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontFamily: "'Rajdhani', sans-serif",
                     fontWeight: 600,
-                    letterSpacing: '0.5px',
                     cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#FEC00F';
-                    e.currentTarget.style.color = '#FEC00F';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#424242';
-                    e.currentTarget.style.color = '#FFFFFF';
                   }}
                 >
                   <Download size={14} />
@@ -444,7 +419,7 @@ export function AFLGeneratorPage() {
               <button
                 style={{
                   flex: 1,
-                  height: '44px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -456,17 +431,7 @@ export function AFLGeneratorPage() {
                   fontSize: '13px',
                   fontFamily: "'Rajdhani', sans-serif",
                   fontWeight: 600,
-                  letterSpacing: '0.5px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#FEC00F';
-                  e.currentTarget.style.color = '#FEC00F';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#424242';
-                  e.currentTarget.style.color = '#FFFFFF';
                 }}
               >
                 <Zap size={16} />
@@ -475,7 +440,7 @@ export function AFLGeneratorPage() {
               <button
                 style={{
                   flex: 1,
-                  height: '44px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -487,17 +452,7 @@ export function AFLGeneratorPage() {
                   fontSize: '13px',
                   fontFamily: "'Rajdhani', sans-serif",
                   fontWeight: 600,
-                  letterSpacing: '0.5px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#FEC00F';
-                  e.currentTarget.style.color = '#FEC00F';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#424242';
-                  e.currentTarget.style.color = '#FFFFFF';
                 }}
               >
                 <Bug size={16} />
@@ -506,7 +461,7 @@ export function AFLGeneratorPage() {
               <button
                 style={{
                   flex: 1,
-                  height: '44px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -518,17 +473,7 @@ export function AFLGeneratorPage() {
                   fontSize: '13px',
                   fontFamily: "'Rajdhani', sans-serif",
                   fontWeight: 600,
-                  letterSpacing: '0.5px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#FEC00F';
-                  e.currentTarget.style.color = '#FEC00F';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#424242';
-                  e.currentTarget.style.color = '#FFFFFF';
                 }}
               >
                 <Lightbulb size={16} />
@@ -538,7 +483,7 @@ export function AFLGeneratorPage() {
                 onClick={() => setShowFeedbackModal(true)}
                 style={{
                   flex: 1,
-                  height: '44px',
+                  height: '40px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -550,15 +495,7 @@ export function AFLGeneratorPage() {
                   fontSize: '13px',
                   fontFamily: "'Rajdhani', sans-serif",
                   fontWeight: 600,
-                  letterSpacing: '0.5px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#FEC00F22';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
                 <MessageSquare size={16} />
