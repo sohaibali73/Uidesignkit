@@ -1,6 +1,53 @@
 // API Client for communicating with the backend
 
-import { User, AuthResponse, Message, Conversation, AFLGenerateRequest, AFLCode, Document, SearchResult, BacktestResult, Strategy, BrainStats } from '@/types/api';
+import {
+  User,
+  AuthResponse,
+  Message,
+  Conversation,
+  AFLGenerateRequest,
+  AFLCode,
+  Document,
+  SearchResult,
+  BacktestResult,
+  Strategy,
+  BrainStats,
+  // Training types
+  TrainingData,
+  TrainingCreateRequest,
+  QuickTrainRequest,
+  CorrectionRequest,
+  TrainingStats,
+  TrainingCategory,
+  TrainingType,
+  // Feedback types
+  UserFeedback,
+  FeedbackCreateRequest,
+  FeedbackReviewRequest,
+  FeedbackStatus,
+  // Suggestion types
+  TrainingSuggestion,
+  SuggestionCreateRequest,
+  SuggestionReviewRequest,
+  SuggestionStatus,
+  // Analytics types
+  AnalyticsOverview,
+  AnalyticsTrends,
+  LearningCurve,
+  PopularPattern,
+  TrainingEffectiveness,
+  // Admin types
+  AdminStatus,
+  AdminUser,
+  AdminConfig,
+  // Training test types
+  TrainingTestRequest,
+  TrainingTestResult,
+  // Knowledge types
+  KnowledgeSearchResult,
+  KnowledgeCategory,
+  TrainingTypeInfo,
+} from '@/types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
 
@@ -60,13 +107,15 @@ class APIClient {
     return response.json();
   }
 
-  // Auth endpoints
-  async register(email: string, password: string, name: string, claudeApiKey: string) {
+  // ==================== AUTH ENDPOINTS ====================
+
+  async register(email: string, password: string, name: string, claudeApiKey: string, tavilyApiKey?: string) {
     const response = await this.request<AuthResponse>('/auth/register', 'POST', {
       email,
       password,
       name,
       claude_api_key: claudeApiKey,
+      tavily_api_key: tavilyApiKey,
     });
     this.setToken(response.access_token);
     return response;
@@ -90,7 +139,8 @@ class APIClient {
     localStorage.removeItem('auth_token');
   }
 
-  // AFL endpoints
+  // ==================== AFL ENDPOINTS ====================
+
   async generateAFL(request: AFLGenerateRequest) {
     return this.request<AFLCode>('/afl/generate', 'POST', request);
   }
@@ -114,7 +164,20 @@ class APIClient {
     return this.request<{ valid: boolean; errors?: string[] }>('/afl/validate', 'POST', { code });
   }
 
-  // Chat endpoints
+  async getAFLCodes() {
+    return this.request<AFLCode[]>('/afl/codes');
+  }
+
+  async getAFLCode(codeId: string) {
+    return this.request<AFLCode>(`/afl/codes/${codeId}`);
+  }
+
+  async deleteAFLCode(codeId: string) {
+    return this.request<{ success: boolean }>(`/afl/codes/${codeId}`, 'DELETE');
+  }
+
+  // ==================== CHAT ENDPOINTS ====================
+
   async getConversations() {
     return this.request<Conversation[]>('/chat/conversations');
   }
@@ -127,25 +190,44 @@ class APIClient {
     return this.request<Message[]>(`/chat/conversations/${conversationId}/messages`);
   }
 
+  async deleteConversation(conversationId: string) {
+    return this.request<{ success: boolean }>(`/chat/conversations/${conversationId}`, 'DELETE');
+  }
+
   async sendMessage(content: string, conversationId?: string) {
-    return this.request<Message>('/chat/message', 'POST', {
+    return this.request<{ conversation_id: string; response: string; tools_used?: any[] }>('/chat/message', 'POST', {
       content,
       conversation_id: conversationId,
     });
   }
 
-  // Brain/Knowledge Base endpoints
-  async uploadDocument(file: File, category: string = 'general') {
+  async getChatTools() {
+    return this.request<{ name: string; description: string }[]>('/chat/tools');
+  }
+
+  // ==================== BRAIN/KNOWLEDGE BASE ENDPOINTS ====================
+
+  async uploadDocument(file: File, title?: string, category: string = 'general') {
     const formData = new FormData();
     formData.append('file', file);
+    if (title) formData.append('title', title);
     formData.append('category', category);
 
     return this.request<Document>('/brain/upload', 'POST', formData, true);
   }
 
-  async uploadText(text: string, category: string = 'general') {
+  async uploadDocumentsBatch(files: File[], category: string = 'general') {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    formData.append('category', category);
+
+    return this.request<Document[]>('/brain/upload-batch', 'POST', formData, true);
+  }
+
+  async uploadText(text: string, title?: string, category: string = 'general') {
     return this.request<Document>('/brain/upload-text', 'POST', {
       text,
+      title,
       category,
     });
   }
@@ -170,10 +252,12 @@ class APIClient {
     return this.request<{ success: boolean }>(`/brain/documents/${documentId}`, 'DELETE');
   }
 
-  // Backtest endpoints
-  async uploadBacktest(file: File) {
+  // ==================== BACKTEST ENDPOINTS ====================
+
+  async uploadBacktest(file: File, strategyId?: string) {
     const formData = new FormData();
     formData.append('file', file);
+    if (strategyId) formData.append('strategy_id', strategyId);
 
     return this.request<BacktestResult>('/backtest/upload', 'POST', formData, true);
   }
@@ -186,15 +270,16 @@ class APIClient {
     return this.request<BacktestResult[]>(`/backtest/strategy/${strategyId}`);
   }
 
-  // Reverse Engineer endpoints
-  async startReverseEngineering() {
-    return this.request<Strategy>('/reverse-engineer/start', 'POST', {});
+  // ==================== REVERSE ENGINEER ENDPOINTS ====================
+
+  async startReverseEngineering(query: string) {
+    return this.request<Strategy>('/reverse-engineer/start', 'POST', { query });
   }
 
-  async continueReverseEngineering(strategyId: string, content: string) {
+  async continueReverseEngineering(strategyId: string, message: string) {
     return this.request<Strategy>('/reverse-engineer/continue', 'POST', {
       strategy_id: strategyId,
-      content,
+      message,
     });
   }
 
@@ -214,7 +299,232 @@ class APIClient {
     return this.request<Strategy>(`/reverse-engineer/strategy/${strategyId}`);
   }
 
-  // Health check
+  // ==================== TRAIN ENDPOINTS ====================
+
+  // Feedback
+  async submitFeedback(feedback: FeedbackCreateRequest) {
+    return this.request<UserFeedback>('/train/feedback', 'POST', feedback);
+  }
+
+  async getMyFeedback() {
+    return this.request<UserFeedback[]>('/train/feedback/my');
+  }
+
+  async getFeedback(feedbackId: string) {
+    return this.request<UserFeedback>(`/train/feedback/${feedbackId}`);
+  }
+
+  // Training Testing
+  async testTraining(request: TrainingTestRequest) {
+    return this.request<TrainingTestResult>('/train/test', 'POST', request);
+  }
+
+  async getTrainingEffectiveness() {
+    return this.request<TrainingEffectiveness>('/train/effectiveness');
+  }
+
+  // Training Suggestions
+  async suggestTraining(suggestion: SuggestionCreateRequest) {
+    return this.request<TrainingSuggestion>('/train/suggest', 'POST', suggestion);
+  }
+
+  async getMySuggestions() {
+    return this.request<TrainingSuggestion[]>('/train/suggestions/my');
+  }
+
+  // Learning Analytics
+  async getLearningCurve() {
+    return this.request<LearningCurve>('/train/analytics/learning-curve');
+  }
+
+  async getPopularPatterns() {
+    return this.request<PopularPattern[]>('/train/analytics/popular-patterns');
+  }
+
+  // Knowledge Base
+  async searchTrainingKnowledge(query: string, category?: TrainingCategory, limit: number = 10) {
+    const params = new URLSearchParams({ query, limit: limit.toString() });
+    if (category) params.append('category', category);
+    return this.request<KnowledgeSearchResult[]>(`/train/knowledge/search?${params}`);
+  }
+
+  async getKnowledgeCategories() {
+    return this.request<KnowledgeCategory[]>('/train/knowledge/categories');
+  }
+
+  async getTrainingTypes() {
+    return this.request<TrainingTypeInfo[]>('/train/knowledge/types');
+  }
+
+  // Quick Learning
+  async quickLearn(code: string, explanation: string) {
+    return this.request<{ success: boolean; message: string }>('/train/quick-learn', 'POST', {
+      code,
+      explanation,
+    });
+  }
+
+  async getTrainStats() {
+    return this.request<TrainingStats>('/train/stats');
+  }
+
+  // ==================== ADMIN ENDPOINTS ====================
+
+  // Status & Overview
+  async getAdminStatus() {
+    return this.request<AdminStatus>('/admin/status');
+  }
+
+  // Admin Management
+  async makeAdmin(userId: string) {
+    return this.request<{ success: boolean }>(`/admin/make-admin/${userId}`, 'POST');
+  }
+
+  async revokeAdmin(userId: string) {
+    return this.request<{ success: boolean }>(`/admin/revoke-admin/${userId}`, 'POST');
+  }
+
+  // Training Management
+  async addTraining(training: TrainingCreateRequest) {
+    return this.request<TrainingData>('/admin/train', 'POST', training);
+  }
+
+  async quickTrain(request: QuickTrainRequest) {
+    return this.request<TrainingData>('/admin/train/quick', 'POST', request);
+  }
+
+  async addCorrection(correction: CorrectionRequest) {
+    return this.request<TrainingData>('/admin/train/correction', 'POST', correction);
+  }
+
+  async batchImportTraining(items: TrainingCreateRequest[]) {
+    return this.request<{ imported: number; failed: number }>('/admin/train/batch', 'POST', { items });
+  }
+
+  async getTrainingList(params?: {
+    training_type?: TrainingType;
+    category?: TrainingCategory;
+    is_active?: boolean;
+    limit?: number;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params?.training_type) searchParams.append('training_type', params.training_type);
+    if (params?.category) searchParams.append('category', params.category);
+    if (params?.is_active !== undefined) searchParams.append('is_active', params.is_active.toString());
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    
+    const query = searchParams.toString();
+    return this.request<TrainingData[]>(`/admin/training${query ? `?${query}` : ''}`);
+  }
+
+  async getTraining(trainingId: string) {
+    return this.request<TrainingData>(`/admin/training/${trainingId}`);
+  }
+
+  async updateTraining(trainingId: string, updates: Partial<TrainingCreateRequest & { is_active: boolean }>) {
+    return this.request<TrainingData>(`/admin/training/${trainingId}`, 'PUT', updates);
+  }
+
+  async deleteTraining(trainingId: string) {
+    return this.request<{ success: boolean }>(`/admin/training/${trainingId}`, 'DELETE');
+  }
+
+  async toggleTraining(trainingId: string) {
+    return this.request<TrainingData>(`/admin/training/${trainingId}/toggle`, 'POST');
+  }
+
+  async getTrainingStatsOverview() {
+    return this.request<TrainingStats>('/admin/training/stats/overview');
+  }
+
+  async exportTraining(params?: { training_type?: TrainingType; category?: TrainingCategory }) {
+    const searchParams = new URLSearchParams();
+    if (params?.training_type) searchParams.append('training_type', params.training_type);
+    if (params?.category) searchParams.append('category', params.category);
+    
+    const query = searchParams.toString();
+    return this.request<TrainingData[]>(`/admin/training/export/all${query ? `?${query}` : ''}`);
+  }
+
+  async previewTrainingContext(category?: TrainingCategory) {
+    const params = category ? `?category=${category}` : '';
+    return this.request<{ context: string }>(`/admin/training/context/preview${params}`);
+  }
+
+  // User Management
+  async getUsers() {
+    return this.request<AdminUser[]>('/admin/users');
+  }
+
+  async getUser(userId: string) {
+    return this.request<AdminUser>(`/admin/users/${userId}`);
+  }
+
+  async deleteUser(userId: string) {
+    return this.request<{ success: boolean }>(`/admin/users/${userId}`, 'DELETE');
+  }
+
+  // Feedback Review
+  async getAllFeedback(params?: { status?: FeedbackStatus; feedback_type?: string; limit?: number }) {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.append('status', params.status);
+    if (params?.feedback_type) searchParams.append('feedback_type', params.feedback_type);
+    if (params?.limit) searchParams.append('limit', params.limit.toString());
+    
+    const query = searchParams.toString();
+    return this.request<UserFeedback[]>(`/admin/feedback${query ? `?${query}` : ''}`);
+  }
+
+  async getAdminFeedback(feedbackId: string) {
+    return this.request<UserFeedback>(`/admin/feedback/${feedbackId}`);
+  }
+
+  async reviewFeedback(feedbackId: string, review: FeedbackReviewRequest) {
+    return this.request<UserFeedback>(`/admin/feedback/${feedbackId}/review`, 'POST', review);
+  }
+
+  // Training Suggestions Review
+  async getAllSuggestions(status?: SuggestionStatus) {
+    const params = status ? `?status=${status}` : '';
+    return this.request<TrainingSuggestion[]>(`/admin/suggestions${params}`);
+  }
+
+  async getSuggestion(suggestionId: string) {
+    return this.request<TrainingSuggestion>(`/admin/suggestions/${suggestionId}`);
+  }
+
+  async reviewSuggestion(suggestionId: string, review: SuggestionReviewRequest) {
+    return this.request<TrainingSuggestion>(`/admin/suggestions/${suggestionId}/review`, 'POST', review);
+  }
+
+  async approveSuggestion(suggestionId: string, priority?: number) {
+    return this.request<TrainingSuggestion>(`/admin/suggestions/${suggestionId}/approve`, 'POST', { priority });
+  }
+
+  async rejectSuggestion(suggestionId: string, reason?: string) {
+    return this.request<TrainingSuggestion>(`/admin/suggestions/${suggestionId}/reject`, 'POST', { reason });
+  }
+
+  // Analytics
+  async getAnalyticsOverview() {
+    return this.request<AnalyticsOverview>('/admin/analytics/overview');
+  }
+
+  async getAnalyticsTrends() {
+    return this.request<AnalyticsTrends>('/admin/analytics/trends');
+  }
+
+  // Configuration
+  async getAdminConfig() {
+    return this.request<AdminConfig>('/admin/config');
+  }
+
+  async addAdminEmail(email: string) {
+    return this.request<{ success: boolean }>(`/admin/config/add-admin-email?email=${encodeURIComponent(email)}`, 'POST');
+  }
+
+  // ==================== UTILITY ENDPOINTS ====================
+
   async checkHealth() {
     return this.request<{ status: string }>('/health');
   }
@@ -224,47 +534,108 @@ class APIClient {
   }
 }
 
-// ... your existing APIClient class code ...
-
 export const apiClient = new APIClient();
 export default apiClient;
 
-// ADD THIS - compatibility layer for pages expecting 'api'
+// Compatibility layer for pages expecting 'api'
 export const api = {
   auth: {
     login: (email: string, password: string) => apiClient.login(email, password),
-    register: (data: any) => apiClient.register(data.email, data.password, data.name, data.claude_api_key),
+    register: (data: any) => apiClient.register(data.email, data.password, data.name, data.claude_api_key, data.tavily_api_key),
     getMe: () => apiClient.getCurrentUser(),
   },
   afl: {
-    generate: (prompt: string, strategyType?: string, settings?: any) => 
-      apiClient.generateAFL({ prompt, strategy_type: strategyType, settings }),
+    generate: (prompt: string, strategyType?: string, settings?: any) =>
+      apiClient.generateAFL({ prompt, strategy_type: strategyType as any, settings }),
     optimize: (code: string) => apiClient.optimizeAFL(code),
     debug: (code: string, errorMessage?: string) => apiClient.debugAFL(code, errorMessage),
     explain: (code: string) => apiClient.explainAFL(code),
     validate: (code: string) => apiClient.validateAFL(code),
+    getCodes: () => apiClient.getAFLCodes(),
+    getCode: (codeId: string) => apiClient.getAFLCode(codeId),
+    deleteCode: (codeId: string) => apiClient.deleteAFLCode(codeId),
   },
   chat: {
     getConversations: () => apiClient.getConversations(),
     createConversation: () => apiClient.createConversation(),
     getMessages: (conversationId: string) => apiClient.getMessages(conversationId),
+    deleteConversation: (conversationId: string) => apiClient.deleteConversation(conversationId),
     sendMessage: (content: string, conversationId?: string) => apiClient.sendMessage(content, conversationId),
+    getTools: () => apiClient.getChatTools(),
   },
   brain: {
-    uploadDocument: (file: File, category?: string) => apiClient.uploadDocument(file, category),
+    uploadDocument: (file: File, category?: string) => apiClient.uploadDocument(file, undefined, category),
     search: (query: string, category?: string, limit?: number) => apiClient.searchKnowledge(query, category, limit),
     getDocuments: () => apiClient.getDocuments(),
     getStats: () => apiClient.getBrainStats(),
     deleteDocument: (documentId: string) => apiClient.deleteDocument(documentId),
   },
   backtest: {
-    upload: (file: File) => apiClient.uploadBacktest(file),
+    upload: (file: File, strategyId?: string) => apiClient.uploadBacktest(file, strategyId),
     getBacktest: (backtestId: string) => apiClient.getBacktest(backtestId),
+    getStrategyBacktests: (strategyId: string) => apiClient.getStrategyBacktests(strategyId),
   },
   reverseEngineer: {
-    startSession: (description: string) => apiClient.startReverseEngineering(),
+    startSession: (query: string) => apiClient.startReverseEngineering(query),
+    continue: (strategyId: string, message: string) => apiClient.continueReverseEngineering(strategyId, message),
+    research: (strategyId: string) => apiClient.researchStrategy(strategyId),
     generateSchematic: (strategyId: string) => apiClient.generateStrategySchematic(strategyId),
     generateCode: (strategyId: string) => apiClient.generateStrategyCode(strategyId),
     getStrategy: (strategyId: string) => apiClient.getStrategy(strategyId),
+  },
+  train: {
+    submitFeedback: (feedback: FeedbackCreateRequest) => apiClient.submitFeedback(feedback),
+    getMyFeedback: () => apiClient.getMyFeedback(),
+    getFeedback: (feedbackId: string) => apiClient.getFeedback(feedbackId),
+    testTraining: (request: TrainingTestRequest) => apiClient.testTraining(request),
+    getEffectiveness: () => apiClient.getTrainingEffectiveness(),
+    suggest: (suggestion: SuggestionCreateRequest) => apiClient.suggestTraining(suggestion),
+    getMySuggestions: () => apiClient.getMySuggestions(),
+    getLearningCurve: () => apiClient.getLearningCurve(),
+    getPopularPatterns: () => apiClient.getPopularPatterns(),
+    searchKnowledge: (query: string, category?: TrainingCategory, limit?: number) =>
+      apiClient.searchTrainingKnowledge(query, category, limit),
+    getCategories: () => apiClient.getKnowledgeCategories(),
+    getTypes: () => apiClient.getTrainingTypes(),
+    quickLearn: (code: string, explanation: string) => apiClient.quickLearn(code, explanation),
+    getStats: () => apiClient.getTrainStats(),
+  },
+  admin: {
+    getStatus: () => apiClient.getAdminStatus(),
+    makeAdmin: (userId: string) => apiClient.makeAdmin(userId),
+    revokeAdmin: (userId: string) => apiClient.revokeAdmin(userId),
+    // Training
+    addTraining: (training: TrainingCreateRequest) => apiClient.addTraining(training),
+    quickTrain: (request: QuickTrainRequest) => apiClient.quickTrain(request),
+    addCorrection: (correction: CorrectionRequest) => apiClient.addCorrection(correction),
+    batchImport: (items: TrainingCreateRequest[]) => apiClient.batchImportTraining(items),
+    getTrainingList: (params?: any) => apiClient.getTrainingList(params),
+    getTraining: (id: string) => apiClient.getTraining(id),
+    updateTraining: (id: string, updates: any) => apiClient.updateTraining(id, updates),
+    deleteTraining: (id: string) => apiClient.deleteTraining(id),
+    toggleTraining: (id: string) => apiClient.toggleTraining(id),
+    getTrainingStats: () => apiClient.getTrainingStatsOverview(),
+    exportTraining: (params?: any) => apiClient.exportTraining(params),
+    previewContext: (category?: TrainingCategory) => apiClient.previewTrainingContext(category),
+    // Users
+    getUsers: () => apiClient.getUsers(),
+    getUser: (id: string) => apiClient.getUser(id),
+    deleteUser: (id: string) => apiClient.deleteUser(id),
+    // Feedback
+    getAllFeedback: (params?: any) => apiClient.getAllFeedback(params),
+    getFeedback: (id: string) => apiClient.getAdminFeedback(id),
+    reviewFeedback: (id: string, review: FeedbackReviewRequest) => apiClient.reviewFeedback(id, review),
+    // Suggestions
+    getAllSuggestions: (status?: SuggestionStatus) => apiClient.getAllSuggestions(status),
+    getSuggestion: (id: string) => apiClient.getSuggestion(id),
+    reviewSuggestion: (id: string, review: SuggestionReviewRequest) => apiClient.reviewSuggestion(id, review),
+    approveSuggestion: (id: string, priority?: number) => apiClient.approveSuggestion(id, priority),
+    rejectSuggestion: (id: string, reason?: string) => apiClient.rejectSuggestion(id, reason),
+    // Analytics
+    getAnalytics: () => apiClient.getAnalyticsOverview(),
+    getTrends: () => apiClient.getAnalyticsTrends(),
+    // Config
+    getConfig: () => apiClient.getAdminConfig(),
+    addAdminEmail: (email: string) => apiClient.addAdminEmail(email),
   },
 };

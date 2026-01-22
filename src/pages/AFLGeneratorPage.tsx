@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Sparkles, Copy, Check, Download, Bug, Lightbulb, Zap, Loader2 } from 'lucide-react';
+import { Sparkles, Copy, Check, Download, Bug, Lightbulb, Zap, Loader2, MessageSquare } from 'lucide-react';
+import FeedbackModal from '@/components/FeedbackModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
 
@@ -10,6 +11,8 @@ export function AFLGeneratorPage() {
   const [generatedCode, setGeneratedCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [codeId, setCodeId] = useState<string | undefined>(undefined);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -476,10 +479,41 @@ export function AFLGeneratorPage() {
                 <Lightbulb size={16} />
                 EXPLAIN
               </button>
+              <button
+                onClick={() => setShowFeedbackModal(true)}
+                style={{
+                  flex: 1,
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid #FEC00F',
+                  borderRadius: '8px',
+                  color: '#FEC00F',
+                  fontSize: '13px',
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                <MessageSquare size={16} />
+                FEEDBACK
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        codeId={codeId}
+        originalPrompt={prompt}
+        generatedCode={generatedCode}
+      />
 
       {/* CSS Animation for spinner */}
       <style>{`

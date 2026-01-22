@@ -14,6 +14,8 @@ import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { BacktestPage } from './pages/BacktestPage';
 import { ReverseEngineerPage } from './pages/ReverseEngineerPage';  // Named import
 import { SettingsPage } from './pages/SettingsPage';
+import AdminPage from './pages/AdminPage';
+import TrainingPage from './pages/TrainingPage';
 
 // Add this route inside the protected routes:
 
@@ -49,6 +51,8 @@ function App() {
             <Route path="knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="backtest" element={<BacktestPage />} />
             <Route path="reverse-engineer" element={<ReverseEngineerPage />} />
+            <Route path="training" element={<TrainingPage />} />
+            <Route path="admin" element={<AdminPage />} />
           </Route>
           
           <Route path="*" element={<Navigate to="/" replace />} />
