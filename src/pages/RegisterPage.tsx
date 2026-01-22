@@ -230,17 +230,20 @@ export function RegisterPage() {
       backgroundColor: '#0A0A0B',
       display: 'flex',
       fontFamily: "'Quicksand', sans-serif",
+      flexDirection: window.innerWidth < 1024 ? 'column' : 'row',
     }}>
       {/* Left Side - Form */}
       <div style={{
-        width: '550px',
+        width: window.innerWidth < 1024 ? '100%' : '550px',
         backgroundColor: '#121212',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: '60px',
-        borderRight: '1px solid #2A2A2A',
+        padding: window.innerWidth < 768 ? '32px 24px' : '60px',
+        borderRight: window.innerWidth < 1024 ? 'none' : '1px solid #2A2A2A',
+        borderTop: window.innerWidth < 1024 ? '1px solid #2A2A2A' : 'none',
         overflowY: 'auto',
+        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
       }}>
         <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
           {/* Logo */}
@@ -692,13 +695,14 @@ export function RegisterPage() {
       <div style={{
         flex: 1,
         background: 'linear-gradient(135deg, #1A1A1D 0%, #0A0A0B 50%, #1A1A1D 100%)',
-        display: 'flex',
+        display: window.innerWidth < 1024 ? 'none' : 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '60px',
+        padding: window.innerWidth < 768 ? '40px 24px' : '60px',
         position: 'relative',
         overflow: 'hidden',
+        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
       }}>
         {/* Background Effects */}
         <div style={{

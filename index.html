@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Analyst" />
+    <meta name="theme-color" content="#0A0A0B" />
     <title>Analyst by Potomac</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +26,49 @@
         background-color: #121212;
         color: #FFFFFF;
         font-family: 'Quicksand', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overscroll-behavior: none;
+        padding-top: max(0px, env(safe-area-inset-top));
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+      }
+      
+      /* Prevent zoom on double-tap */
+      input, button, a {
+        touch-action: manipulation;
+      }
+      
+      /* Mobile-optimized inputs */
+      @media (max-width: 768px) {
+        input, textarea, select {
+          font-size: 16px !important;
+          min-height: 44px;
+        }
+        button {
+          min-height: 44px;
+        }
+        
+        /* Improve scrolling performance */
+        body {
+          -webkit-backface-visibility: hidden;
+          -webkit-perspective: 1000;
+        }
+        
+        /* Prevent layout shift on scroll */
+        html {
+          overflow-y: scroll;
+        }
+      }
+      
+      /* Safe area for notched devices */
+      @supports (padding: max(0px)) {
+        body {
+          padding-top: max(12px, env(safe-area-inset-top));
+          padding-left: max(12px, env(safe-area-inset-left));
+          padding-right: max(12px, env(safe-area-inset-right));
+        }
       }
     </style>
   </head>

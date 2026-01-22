@@ -48,6 +48,7 @@ export function LoginPage() {
       backgroundColor: '#0A0A0B',
       display: 'flex',
       fontFamily: "'Quicksand', sans-serif",
+      flexDirection: window.innerWidth < 1024 ? 'column' : 'row',
     }}>
       {/* Left Side - Branding */}
       <div style={{
@@ -57,9 +58,11 @@ export function LoginPage() {
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '60px',
+        padding: window.innerWidth < 768 ? '40px 24px' : '60px',
         position: 'relative',
         overflow: 'hidden',
+        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
+        paddingTop: window.innerWidth < 1024 ? '40px' : '60px',
       }}>
         {/* Background Pattern */}
         <div style={{
@@ -185,13 +188,15 @@ export function LoginPage() {
 
       {/* Right Side - Login Form */}
       <div style={{
-        width: '500px',
+        width: window.innerWidth < 1024 ? '100%' : '500px',
         backgroundColor: '#121212',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: '60px',
-        borderLeft: '1px solid #2A2A2A',
+        padding: window.innerWidth < 768 ? '32px 24px' : '60px',
+        borderLeft: window.innerWidth < 1024 ? 'none' : '1px solid #2A2A2A',
+        borderTop: window.innerWidth < 1024 ? '1px solid #2A2A2A' : 'none',
+        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
       }}>
         <div style={{ maxWidth: '360px', margin: '0 auto', width: '100%' }}>
           <h2 style={{

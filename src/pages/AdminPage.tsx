@@ -133,6 +133,14 @@ export function AdminPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Data state
+  const [adminStatus, setAdminStatus] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [trainingList, setTrainingList] = useState<any[]>([]);
+  const [feedback, setFeedback] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [analytics, setAnalytics] = useState<any>(null);
 
   useEffect(() => {
     loadAdminData();
@@ -142,7 +150,23 @@ export function AdminPage() {
     try {
       setIsLoading(true);
       setError(null);
-      // Load admin data here
+      
+      // Load all admin data in parallel
+      const [status, usersList, training, feedbackList, suggestionsList, analyticsData] = await Promise.all([
+        apiClient.getAdminStatus(),
+        apiClient.getUsers(),
+        apiClient.getTrainingList({ limit: 100 }),
+        apiClient.getAllFeedback({ limit: 100 }),
+        apiClient.getAllSuggestions(),
+        apiClient.getAnalyticsOverview(),
+      ]);
+      
+      setAdminStatus(status);
+      setUsers(usersList);
+      setTrainingList(training);
+      setFeedback(feedbackList);
+      setSuggestions(suggestionsList);
+      setAnalytics(analyticsData);
       setIsLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load admin data');
@@ -211,27 +235,73 @@ export function AdminPage() {
           {/* Overview Tab */}
           <TabsContent value="overview">
             <div style={{ display: 'grid', gap: '24px' }}>
-              <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>System Statistics</h2>
-                <div style={styles.statsGrid}>
-                  <div style={styles.statItem}>
-                    <div style={styles.statValue}>1,234</div>
-                    <div style={styles.statLabel}>Total Users</div>
-                  </div>
-                  <div style={styles.statItem}>
-                    <div style={styles.statValue}>567</div>
-                    <div style={styles.statLabel}>Active Today</div>
-                  </div>
-                  <div style={styles.statItem}>
-                    <div style={styles.statValue}>45</div>
-                    <div style={styles.statLabel}>New Signups</div>
-                  </div>
-                  <div style={styles.statItem}>
-                    <div style={styles.statValue}>98.5%</div>
-                    <div style={styles.statLabel}>Uptime</div>
+              {adminStatus && (
+                <div style={styles.card}>
+                  <h2 style={styles.sectionTitle}>System Statistics</h2>
+                  <div style={styles.statsGrid}>
+                    <div style={styles.statItem}>
+                      <div style={styles.statValue}>{adminStatus.stats.total_users}</div>
+                      <div style={styles.statLabel}>Total Users</div>
+                    </div>
+                    <div style={styles.statItem}>
+                      <div style={styles.statValue}>{adminStatus.stats.training.total}</div>
+                      <div style={styles.statLabel}>Training Examples</div>
+                    </div>
+                    <div style={styles.statItem}>
+                      <div style={styles.statValue}>{adminStatus.stats.training.active}</div>
+                      <div style={styles.statLabel}>Active Training</div>
+                    </div>
+                    <div style={styles.statItem}>
+                      <div style={styles.statValue}>{adminStatus.stats.total_documents}</div>
+                      <div style={styles.statLabel}>Documents</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+              
+              {analytics && (
+                <>
+                  <div style={styles.card}>
+                    <h2 style={styles.sectionTitle}>Feedback Analytics</h2>
+                    <div style={styles.statsGrid}>
+                      <div style={styles.statItem}>
+                        <div style={styles.statValue}>{analytics.feedback.total}</div>
+                        <div style={styles.statLabel}>Total Feedback</div>
+                      </div>
+                      <div style={styles.statItem}>
+                        <div style={styles.statValue}>{analytics.feedback.average_rating?.toFixed(1) || 'N/A'}</div>
+                        <div style={styles.statLabel}>Avg Rating</div>
+                      </div>
+                      <div style={styles.statItem}>
+                        <div style={styles.statValue}>{analytics.feedback.corrections}</div>
+                        <div style={styles.statLabel}>Corrections</div>
+                      </div>
+                      <div style={styles.statItem}>
+                        <div style={styles.statValue}>{analytics.feedback.pending_review}</div>
+                        <div style={styles.statLabel}>Pending Review</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style={styles.card}>
+                    <h2 style={styles.sectionTitle}>Code Generation</h2>
+                    <div style={styles.statsGrid}>
+                      <div style={styles.statItem}>
+                        <div style={styles.statValue}>{analytics.code_generation.total_codes}</div>
+                        <div style={styles.statLabel}>Codes Generated</div>
+                      </div>
+                      <div style={styles.statItem}>
+                        <div style={styles.statValue}>{analytics.training.total_examples}</div>
+                        <div style={styles.statLabel}>Training Examples</div>
+                      </div>
+                      <div style={styles.statItem}>
+                        <div style={styles.statValue}>{analytics.training.pending_suggestions}</div>
+                        <div style={styles.statLabel}>Pending Suggestions</div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </TabsContent>
 
@@ -245,26 +315,31 @@ export function AdminPage() {
                     <tr style={{ backgroundColor: '#2A2A2A' }}>
                       <th style={styles.tableHeader}>Username</th>
                       <th style={styles.tableHeader}>Email</th>
-                      <th style={styles.tableHeader}>Role</th>
                       <th style={styles.tableHeader}>Status</th>
-                      <th style={styles.tableHeader}>Actions</th>
+                      <th style={styles.tableHeader}>Codes Generated</th>
+                      <th style={styles.tableHeader}>Joined</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}>user123</td>
-                      <td style={styles.tableCell}>user@example.com</td>
-                      <td style={styles.tableCell}>User</td>
-                      <td style={styles.tableCell}>
-                        <span style={{ color: '#4CAF50', fontSize: '12px', fontWeight: 600 }}>Active</span>
-                      </td>
-                      <td style={styles.tableCell}>
-                        <div style={styles.buttonGroup}>
-                          <button style={{ backgroundColor: '#424242', color: '#FFFFFF', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>Edit</button>
-                          <button style={{ backgroundColor: '#F4444422', color: '#F44444', padding: '6px 12px', borderRadius: '6px', border: '1px solid #F44444', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>Ban</button>
-                        </div>
-                      </td>
-                    </tr>
+                    {users.length > 0 ? (
+                      users.map((u) => (
+                        <tr key={u.id} style={styles.tableRow}>
+                          <td style={styles.tableCell}>{u.name || 'N/A'}</td>
+                          <td style={styles.tableCell}>{u.email}</td>
+                          <td style={styles.tableCell}>
+                            <span style={{ color: '#4CAF50', fontSize: '12px', fontWeight: 600 }}>Active</span>
+                          </td>
+                          <td style={styles.tableCell}>{u.codes_generated || 0}</td>
+                          <td style={styles.tableCell}>{new Date(u.created_at).toLocaleDateString()}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} style={{ ...styles.tableCell, textAlign: 'center', color: '#9E9E9E' }}>
+                          No users found
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -274,32 +349,110 @@ export function AdminPage() {
           {/* Content Tab */}
           <TabsContent value="content">
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Content Management</h2>
-              <p style={{ color: '#9E9E9E', marginBottom: '20px', fontSize: '14px' }}>Manage training materials, knowledge base, and system content</p>
-              <button style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Plus style={{ width: '16px', height: '16px' }} />
-                Add Content
-              </button>
+              <h2 style={styles.sectionTitle}>Training Management</h2>
+              <p style={{ color: '#9E9E9E', marginBottom: '20px', fontSize: '14px' }}>Active training examples ({trainingList.length} total)</p>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr style={{ backgroundColor: '#2A2A2A' }}>
+                      <th style={styles.tableHeader}>Title</th>
+                      <th style={styles.tableHeader}>Type</th>
+                      <th style={styles.tableHeader}>Category</th>
+                      <th style={styles.tableHeader}>Priority</th>
+                      <th style={styles.tableHeader}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trainingList.length > 0 ? (
+                      trainingList.slice(0, 10).map((training) => (
+                        <tr key={training.id} style={styles.tableRow}>
+                          <td style={styles.tableCell}>{training.title}</td>
+                          <td style={styles.tableCell}>{training.training_type}</td>
+                          <td style={styles.tableCell}>{training.category}</td>
+                          <td style={styles.tableCell}>{training.priority || 'N/A'}</td>
+                          <td style={styles.tableCell}>
+                            <span style={{ color: training.is_active ? '#4CAF50' : '#FF9800', fontSize: '12px', fontWeight: 600 }}>
+                              {training.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} style={{ ...styles.tableCell, textAlign: 'center', color: '#9E9E9E' }}>
+                          No training examples found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </TabsContent>
 
           {/* Settings Tab */}
           <TabsContent value="settings">
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>System Settings</h2>
-              <p style={{ color: '#9E9E9E', marginBottom: '20px', fontSize: '14px' }}>Configure system-wide settings and preferences</p>
-              <div style={{ display: 'grid', gap: '20px', maxWidth: '400px' }}>
-                <div>
-                  <label style={{ color: '#FFFFFF', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>API Key</label>
-                  <Input placeholder="Enter API key" style={{ ...styles.inputField }} />
+            <div style={{ display: 'grid', gap: '24px' }}>
+              <div style={styles.card}>
+                <h2 style={styles.sectionTitle}>Pending Reviews</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                  <div style={{ ...styles.statItem, textAlign: 'center' }}>
+                    <div style={styles.statValue}>{feedback.filter((f) => f.status === 'pending_review').length}</div>
+                    <div style={styles.statLabel}>Pending Feedback</div>
+                  </div>
+                  <div style={{ ...styles.statItem, textAlign: 'center' }}>
+                    <div style={styles.statValue}>{suggestions.filter((s) => s.status === 'pending').length}</div>
+                    <div style={styles.statLabel}>Pending Suggestions</div>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ color: '#FFFFFF', fontSize: '13px', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Max Users</label>
-                  <Input type="number" placeholder="Enter max users" style={{ ...styles.inputField }} />
+              </div>
+
+              <div style={styles.card}>
+                <h2 style={styles.sectionTitle}>Recent Feedback</h2>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {feedback.slice(0, 5).map((f) => (
+                    <div key={f.id} style={{ padding: '12px', backgroundColor: '#2A2A2A', borderRadius: '8px', borderLeft: '3px solid #FEC00F' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ color: '#FFFFFF', fontWeight: 600, fontSize: '13px' }}>{f.feedback_type}</span>
+                        <span style={{ color: f.rating ? '#FEC00F' : '#9E9E9E', fontSize: '12px' }}>
+                          {f.rating ? `${f.rating}/5 ⭐` : 'No rating'}
+                        </span>
+                      </div>
+                      <p style={{ color: '#9E9E9E', fontSize: '12px', margin: '0 0 8px', lineHeight: '1.4' }}>
+                        {f.feedback_text?.substring(0, 100)}...
+                      </p>
+                      <span style={{ color: f.status === 'pending_review' ? '#FF9800' : '#4CAF50', fontSize: '11px', fontWeight: 600 }}>
+                        {f.status}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <button style={{ backgroundColor: '#FEC00F', color: '#212121', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '14px', fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.5px', width: '100%' }}>
-                  Save Settings
-                </button>
+              </div>
+
+              <div style={styles.card}>
+                <h2 style={styles.sectionTitle}>Recent Suggestions</h2>
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {suggestions.slice(0, 5).map((s) => (
+                    <div key={s.id} style={{ padding: '12px', backgroundColor: '#2A2A2A', borderRadius: '8px', borderLeft: '3px solid #2196F3' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span style={{ color: '#FFFFFF', fontWeight: 600, fontSize: '13px' }}>{s.title}</span>
+                        <span style={{
+                          color: s.status === 'pending' ? '#FEC00F' : s.status === 'approved' ? '#4CAF50' : '#F44444',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          backgroundColor: s.status === 'pending' ? '#FEC00F22' : s.status === 'approved' ? '#4CAF5022' : '#F4444422'
+                        }}>
+                          {s.status}
+                        </span>
+                      </div>
+                      <p style={{ color: '#9E9E9E', fontSize: '12px', margin: 0 }}>
+                        Priority: {s.priority || 'N/A'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </TabsContent>

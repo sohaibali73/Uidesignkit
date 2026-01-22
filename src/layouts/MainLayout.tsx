@@ -36,9 +36,21 @@ export function MainLayout() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { resolvedTheme } = useTheme();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(window.innerWidth < 768);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const sidebarWidth = collapsed ? 80 : 256;
+  React.useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setCollapsed(true);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const sidebarWidth = collapsed ? (isMobile ? 0 : 80) : 256;
   const isDark = resolvedTheme === 'dark';
 
   // Theme-aware colors
@@ -70,10 +82,11 @@ export function MainLayout() {
       height: '100vh',
       backgroundColor: colors.sidebar,
       borderRight: `1px solid ${colors.border}`,
-      display: 'flex',
+      display: isMobile && !mobileMenuOpen ? 'none' : 'flex',
       flexDirection: 'column' as const,
       transition: 'width 0.3s ease, background-color 0.3s ease',
-      zIndex: 50,
+      zIndex: isMobile ? 100 : 50,
+      width: isMobile ? '100vw' : sidebarWidth,
     } as React.CSSProperties,
     logoSection: {
       height: '64px',
@@ -143,6 +156,8 @@ export function MainLayout() {
       flex: 1,
       minHeight: '100vh',
       transition: 'margin-left 0.3s ease',
+      marginLeft: isMobile ? 0 : sidebarWidth,
+      width: isMobile ? '100%' : `calc(100% - ${sidebarWidth}px)`,
     } as React.CSSProperties,
     collapseBtn: {
       background: 'none',
@@ -281,6 +296,58 @@ export function MainLayout() {
 
       {/* Main Content */}
       <main style={{ ...styles.main, marginLeft: sidebarWidth }}>
+        {isMobile && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '12px 16px',
+            backgroundColor: colors.sidebar,
+            borderBottom: `1px solid ${colors.border}`,
+            position: 'sticky',
+            top: 0,
+            zIndex: 40,
+          }}>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: colors.text,
+                cursor: 'pointer',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {mobileMenuOpen ? <ChevronLeft size={24} /> : <ChevronRight size={24} />}
+            </button>
+            <div style={styles.logoBox}>
+              <img 
+                src={isDark ? yellowLogo : blackLogo} 
+                alt="Analyst Logo" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain' 
+                }} 
+              />
+            </div>
+            <span style={{ ...styles.logoText, fontSize: '16px', marginLeft: '8px' }}>ANALYST</span>
+          </div>
+        )}
+        {mobileMenuOpen && isMobile && (
+          <div 
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 90,
+            }}
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )}
         <Outlet />
       </main>
     </div>
