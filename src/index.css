@@ -11,6 +11,9 @@
 html, body, #root {
   height: 100%;
   width: 100%;
+  /* iOS Safari fix */
+  height: 100dvh;
+  height: 100vh;
 }
 
 body {
@@ -19,6 +22,34 @@ body {
   font-family: 'Quicksand', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* iOS Safari prevents zoom on input focus */
+  font-size: 16px;
+}
+
+/* iOS Safari input fixes */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  font-size: 16px !important;
+  border-radius: 10px;
+}
+
+/* Remove default iOS styling */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  -webkit-appearance: none;
+  -webkit-border-radius: 10px;
+}
+
+/* iOS home indicator safe area support */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
 }
 
 /* Custom scrollbar */
@@ -39,3 +70,27 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #757575;
 }
+
+/* Prevent iOS double-tap zoom delay */
+button, a, input[type="button"], input[type="submit"] {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+/* Prevent text selection on long press */
+* {
+  -webkit-user-select: text;
+  -webkit-user-select: none;
+}
+
+input, textarea, select {
+  -webkit-user-select: text;
+}
+
+/* Fix keyboard appearing on focus */
+input, textarea, select {
+  font-size: 16px;
+}
+

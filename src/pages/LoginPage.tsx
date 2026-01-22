@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Eye, 
@@ -21,6 +21,22 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+      setIsSmallMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,25 +60,28 @@ export function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       backgroundColor: '#0A0A0B',
       display: 'flex',
       fontFamily: "'Quicksand', sans-serif",
-      flexDirection: window.innerWidth < 1024 ? 'column' : 'row',
+      flexDirection: isMobile ? 'column' : 'row',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
     }}>
       {/* Left Side - Branding */}
       <div style={{
-        flex: 1,
+        flex: isMobile ? undefined : 1,
         background: 'linear-gradient(135deg, #1A1A1D 0%, #0A0A0B 50%, #1A1A1D 100%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: window.innerWidth < 768 ? '40px 24px' : '60px',
+        padding: isSmallMobile ? '40px 24px' : '60px',
         position: 'relative',
         overflow: 'hidden',
-        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
-        paddingTop: window.innerWidth < 1024 ? '40px' : '60px',
+        minHeight: isMobile ? 'auto' : '100dvh',
+        paddingTop: isMobile ? '20px' : '60px',
+        paddingBottom: isMobile ? '30px' : '0',
       }}>
         {/* Background Pattern */}
         <div style={{
@@ -188,15 +207,16 @@ export function LoginPage() {
 
       {/* Right Side - Login Form */}
       <div style={{
-        width: window.innerWidth < 1024 ? '100%' : '500px',
+        width: isMobile ? '100%' : '500px',
         backgroundColor: '#121212',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: window.innerWidth < 768 ? '32px 24px' : '60px',
-        borderLeft: window.innerWidth < 1024 ? 'none' : '1px solid #2A2A2A',
-        borderTop: window.innerWidth < 1024 ? '1px solid #2A2A2A' : 'none',
-        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
+        padding: isSmallMobile ? '32px 24px' : '60px',
+        borderLeft: isMobile ? 'none' : '1px solid #2A2A2A',
+        borderTop: isMobile ? '1px solid #2A2A2A' : 'none',
+        minHeight: isMobile ? 'auto' : '100dvh',
+        paddingBottom: isSmallMobile ? 'max(32px, env(safe-area-inset-bottom))' : '60px',
       }}>
         <div style={{ maxWidth: '360px', margin: '0 auto', width: '100%' }}>
           <h2 style={{
@@ -261,11 +281,13 @@ export function LoginPage() {
                   border: '1px solid #2A2A2A',
                   borderRadius: '10px',
                   color: '#FFFFFF',
-                  fontSize: '14px',
+                  fontSize: '16px',
                   fontFamily: "'Quicksand', sans-serif",
                   outline: 'none',
                   transition: 'border-color 0.2s, box-shadow 0.2s',
                   boxSizing: 'border-box',
+                  WebkitAppearance: 'none',
+                  appearance: 'none',
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#FEC00F';
@@ -324,11 +346,13 @@ export function LoginPage() {
                     border: '1px solid #2A2A2A',
                     borderRadius: '10px',
                     color: '#FFFFFF',
-                    fontSize: '14px',
+                    fontSize: '16px',
                     fontFamily: "'Quicksand', sans-serif",
                     outline: 'none',
                     transition: 'border-color 0.2s, box-shadow 0.2s',
                     boxSizing: 'border-box',
+                    WebkitAppearance: 'none',
+                    appearance: 'none',
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#FEC00F';

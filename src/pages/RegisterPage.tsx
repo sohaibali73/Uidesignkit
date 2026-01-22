@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Eye,
@@ -27,6 +27,8 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showClaudeKey, setShowClaudeKey] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth < 768);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -37,6 +39,20 @@ export function RegisterPage() {
     tavilyApiKey: '',
     agreeToTerms: false,
   });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+      setIsSmallMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   const updateFormData = (field: string, value: string | boolean) => {
     setFormData({ ...formData, [field]: value });
@@ -171,10 +187,12 @@ export function RegisterPage() {
     border: '1px solid #2A2A2A',
     borderRadius: '10px',
     color: '#FFFFFF',
-    fontSize: '14px',
+    fontSize: '16px',
     fontFamily: "'Quicksand', sans-serif",
     outline: 'none',
     boxSizing: 'border-box',
+    WebkitAppearance: 'none',
+    appearance: 'none',
   };
 
   const labelStyle: React.CSSProperties = {
@@ -226,24 +244,27 @@ export function RegisterPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       backgroundColor: '#0A0A0B',
       display: 'flex',
       fontFamily: "'Quicksand', sans-serif",
-      flexDirection: window.innerWidth < 1024 ? 'column' : 'row',
+      flexDirection: isMobile ? 'column' : 'row',
+      WebkitUserSelect: 'none',
+      WebkitTouchCallout: 'none',
     }}>
       {/* Left Side - Form */}
       <div style={{
-        width: window.innerWidth < 1024 ? '100%' : '550px',
+        width: isMobile ? '100%' : '550px',
         backgroundColor: '#121212',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        padding: window.innerWidth < 768 ? '32px 24px' : '60px',
-        borderRight: window.innerWidth < 1024 ? 'none' : '1px solid #2A2A2A',
-        borderTop: window.innerWidth < 1024 ? '1px solid #2A2A2A' : 'none',
+        padding: isSmallMobile ? '32px 24px' : '60px',
+        borderRight: isMobile ? 'none' : '1px solid #2A2A2A',
+        borderTop: isMobile ? '1px solid #2A2A2A' : 'none',
         overflowY: 'auto',
-        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
+        minHeight: isMobile ? 'auto' : '100dvh',
+        paddingBottom: isSmallMobile ? 'max(32px, env(safe-area-inset-bottom))' : '60px',
       }}>
         <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
           {/* Logo */}
@@ -693,16 +714,19 @@ export function RegisterPage() {
 
       {/* Right Side - Branding */}
       <div style={{
-        flex: 1,
+        flex: isMobile ? undefined : 1,
         background: 'linear-gradient(135deg, #1A1A1D 0%, #0A0A0B 50%, #1A1A1D 100%)',
-        display: window.innerWidth < 1024 ? 'none' : 'flex',
+        display: isMobile ? 'none' : 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: window.innerWidth < 768 ? '40px 24px' : '60px',
+        padding: isSmallMobile ? '40px 24px' : '60px',
         position: 'relative',
         overflow: 'hidden',
-        minHeight: window.innerWidth < 1024 ? 'auto' : '100vh',
+        minHeight: isMobile ? 'auto' : '100dvh',
+        paddingTop: isMobile ? '40px' : '60px',
+        paddingBottom: isSmallMobile ? 'max(60px, env(safe-area-inset-bottom))' : '60px',
+      }}>
       }}>
         {/* Background Effects */}
         <div style={{

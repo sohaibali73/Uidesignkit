@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Code2,
@@ -15,16 +15,36 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+export function DashboardPage() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsTablet(window.innerWidth < 1024);
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
 const styles = {
   page: {
-    minHeight: '100vh',
+    minHeight: '100dvh',
     backgroundColor: '#121212',
     fontFamily: "'Quicksand', sans-serif",
   } as React.CSSProperties,
   header: {
     background: 'linear-gradient(135deg, #1E1E1E 0%, #2A2A2A 100%)',
     borderBottom: '1px solid #424242',
-    padding: window.innerWidth < 768 ? '24px' : '32px',
+    padding: isMobile ? '24px' : '32px',
   } as React.CSSProperties,
   headerContent: {
     maxWidth: '1400px',
@@ -32,7 +52,7 @@ const styles = {
   } as React.CSSProperties,
   title: {
     fontFamily: "'Rajdhani', sans-serif",
-    fontSize: window.innerWidth < 768 ? '24px' : '36px',
+    fontSize: isMobile ? '24px' : '36px',
     fontWeight: 700,
     color: '#FFFFFF',
     marginBottom: '8px',
@@ -47,7 +67,7 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
-    padding: window.innerWidth < 768 ? '12px 20px' : '14px 28px',
+    padding: isMobile ? '12px 20px' : '14px 28px',
     backgroundColor: '#FEC00F',
     color: '#212121',
     border: 'none',
@@ -60,13 +80,13 @@ const styles = {
     transition: 'all 0.2s',
   } as React.CSSProperties,
   content: {
-    padding: window.innerWidth < 768 ? '20px' : '32px',
+    padding: isMobile ? '20px' : '32px',
     maxWidth: '1400px',
     margin: '0 auto',
   } as React.CSSProperties,
   statsGrid: {
     display: 'grid',
-    gridTemplateColumns: window.innerWidth < 768 ? '1fr' : window.innerWidth < 1024 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+    gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
     gap: '16px',
     marginBottom: '32px',
   } as React.CSSProperties,
@@ -74,7 +94,7 @@ const styles = {
     backgroundColor: '#1E1E1E',
     border: '1px solid #424242',
     borderRadius: '12px',
-    padding: window.innerWidth < 768 ? '16px' : '24px',
+    padding: isMobile ? '16px' : '24px',
   } as React.CSSProperties,
   statLabel: {
     display: 'flex',
@@ -84,14 +104,14 @@ const styles = {
   } as React.CSSProperties,
   statValue: {
     fontFamily: "'Rajdhani', sans-serif",
-    fontSize: window.innerWidth < 768 ? '28px' : '36px',
+    fontSize: isMobile ? '28px' : '36px',
     fontWeight: 700,
     color: '#FFFFFF',
     marginBottom: '4px',
   } as React.CSSProperties,
   sectionTitle: {
     fontFamily: "'Rajdhani', sans-serif",
-    fontSize: window.innerWidth < 768 ? '16px' : '20px',
+    fontSize: isMobile ? '16px' : '20px',
     fontWeight: 600,
     color: '#FFFFFF',
     marginBottom: '16px',
@@ -102,7 +122,7 @@ const styles = {
   } as React.CSSProperties,
   featuresGrid: {
     display: 'grid',
-    gridTemplateColumns: window.innerWidth < 768 ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
+    gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(300px, 1fr))',
     gap: '16px',
     marginBottom: '32px',
   } as React.CSSProperties,
@@ -110,13 +130,13 @@ const styles = {
     backgroundColor: '#1E1E1E',
     border: '1px solid #424242',
     borderRadius: '12px',
-    padding: window.innerWidth < 768 ? '16px' : '24px',
+    padding: isMobile ? '16px' : '24px',
     cursor: 'pointer',
     transition: 'all 0.2s',
   } as React.CSSProperties,
   featureIcon: {
-    width: window.innerWidth < 768 ? '40px' : '48px',
-    height: window.innerWidth < 768 ? '40px' : '48px',
+    width: isMobile ? '40px' : '48px',
+    height: isMobile ? '40px' : '48px',
     borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',
@@ -125,7 +145,7 @@ const styles = {
   } as React.CSSProperties,
   featureTitle: {
     fontFamily: "'Rajdhani', sans-serif",
-    fontSize: window.innerWidth < 768 ? '15px' : '18px',
+    fontSize: isMobile ? '15px' : '18px',
     fontWeight: 600,
     color: '#FFFFFF',
     marginBottom: '8px',
@@ -162,11 +182,7 @@ const styles = {
   } as React.CSSProperties,
 };
 
-export function DashboardPage() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-
-  const features = [
+const features_data = [
     {
       icon: Code2,
       title: 'AFL Generator',
@@ -208,6 +224,12 @@ export function DashboardPage() {
       bgColor: 'rgba(254, 192, 15, 0.1)',
     },
   ];
+
+export function DashboardPage() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const features = features_data;
 
   const stats = [
     { label: 'Total Strategies', value: '12', sub: '+2 this week', icon: FileCode, color: '#3B82F6' },
