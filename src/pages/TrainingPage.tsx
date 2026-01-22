@@ -33,115 +33,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    backgroundColor: '#121212',
-    fontFamily: "'Quicksand', sans-serif",
-  } as React.CSSProperties,
-  header: {
-    background: 'linear-gradient(135deg, #1E1E1E 0%, #2A2A2A 100%)',
-    borderBottom: '1px solid #424242',
-    padding: '32px',
-  } as React.CSSProperties,
-  headerContent: {
-    maxWidth: '1400px',
-    margin: '0 auto',
-  } as React.CSSProperties,
-  title: {
-    fontFamily: "'Rajdhani', sans-serif",
-    fontSize: '32px',
-    fontWeight: 700,
-    color: '#FFFFFF',
-    marginBottom: '8px',
-    letterSpacing: '1px',
-  } as React.CSSProperties,
-  subtitle: {
-    color: '#9E9E9E',
-    fontSize: '14px',
-  } as React.CSSProperties,
-  content: {
-    padding: '32px',
-    maxWidth: '1400px',
-    margin: '0 auto',
-  } as React.CSSProperties,
-  card: {
-    backgroundColor: '#1E1E1E',
-    border: '1px solid #424242',
-    borderRadius: '12px',
-    padding: '20px',
-  } as React.CSSProperties,
-  statsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '16px',
-    marginBottom: '24px',
-  } as React.CSSProperties,
-  statItem: {
-    backgroundColor: '#2A2A2A',
-    border: '1px solid #424242',
-    borderRadius: '8px',
-    padding: '16px',
-  } as React.CSSProperties,
-  statValue: {
-    fontFamily: "'Rajdhani', sans-serif",
-    fontSize: '24px',
-    fontWeight: 700,
-    color: '#FEC00F',
-    marginBottom: '4px',
-  } as React.CSSProperties,
-  statLabel: {
-    color: '#9E9E9E',
-    fontSize: '12px',
-    fontWeight: 600,
-  } as React.CSSProperties,
-  sectionTitle: {
-    fontFamily: "'Rajdhani', sans-serif",
-    fontSize: '18px',
-    fontWeight: 600,
-    color: '#FFFFFF',
-    marginBottom: '16px',
-    letterSpacing: '0.5px',
-  } as React.CSSProperties,
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-    gap: '16px',
-    marginBottom: '24px',
-  } as React.CSSProperties,
-  knowledgeCard: {
-    backgroundColor: '#2A2A2A',
-    border: '1px solid #424242',
-    borderRadius: '8px',
-    padding: '16px',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  } as React.CSSProperties,
-  feedbackIcon: (type: string) => {
-    const baseStyle = { width: '16px', height: '16px', marginRight: '6px' };
-    switch (type) {
-      case 'praise':
-        return { ...baseStyle, color: '#4CAF50' };
-      case 'correction':
-        return { ...baseStyle, color: '#2196F3' };
-      case 'improvement':
-        return { ...baseStyle, color: '#FF9800' };
-      case 'bug':
-        return { ...baseStyle, color: '#F44444' };
-      default:
-        return baseStyle;
-    }
-  },
-  badge: {
-    display: 'inline-block',
-    padding: '4px 10px',
-    borderRadius: '4px',
-    fontSize: '11px',
-    fontWeight: 600,
-    marginRight: '6px',
-  } as React.CSSProperties,
-};
+import { Card } from '@/components/ui/card';
 
 interface TabData {
   learningCurve: LearningCurve | null;
@@ -323,48 +215,49 @@ export default function TrainingPage() {
   };
 
   const getFeedbackIcon = (type: string) => {
+    const iconClass = "w-4 h-4 mr-1.5";
     switch (type) {
       case 'praise':
-        return <ThumbsUp style={styles.feedbackIcon(type)} />;
+        return <ThumbsUp className={`${iconClass} text-green-500`} />;
       case 'correction':
-        return <AlertTriangle style={styles.feedbackIcon(type)} />;
+        return <AlertTriangle className={`${iconClass} text-blue-500`} />;
       case 'improvement':
-        return <Zap style={styles.feedbackIcon(type)} />;
+        return <Zap className={`${iconClass} text-orange-500`} />;
       case 'bug':
-        return <AlertCircle style={styles.feedbackIcon(type)} />;
+        return <AlertCircle className={`${iconClass} text-red-500`} />;
       default:
         return null;
     }
   };
 
-  const getSuggestionBadgeStyle = (status: string) => {
-    const baseStyle = styles.badge;
+  const getSuggestionBadge = (status: string) => {
+    const baseClasses = "inline-block px-2.5 py-1 rounded text-xs font-semibold";
     switch (status) {
       case 'pending':
-        return { ...baseStyle, backgroundColor: '#FEC00F22', color: '#FEC00F' };
+        return <span className={`${baseClasses} bg-[#FEC00F22] text-[#FEC00F]`}>{status}</span>;
       case 'approved':
-        return { ...baseStyle, backgroundColor: '#4CAF5022', color: '#4CAF50' };
+        return <span className={`${baseClasses} bg-[#4CAF5022] text-[#4CAF50]`}>{status}</span>;
       case 'implemented':
-        return { ...baseStyle, backgroundColor: '#2196F322', color: '#2196F3' };
+        return <span className={`${baseClasses} bg-[#2196F322] text-[#2196F3]`}>{status}</span>;
       case 'rejected':
-        return { ...baseStyle, backgroundColor: '#F4444422', color: '#F44444' };
+        return <span className={`${baseClasses} bg-[#F4444422] text-[#F44444]`}>{status}</span>;
       default:
-        return baseStyle;
+        return <span className={baseClasses}>{status}</span>;
     }
   };
 
   return (
-    <div style={styles.page}>
+    <div className="min-h-screen bg-[#121212] font-['Quicksand']">
       {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.headerContent}>
-          <h1 style={styles.title}>Training & Learning</h1>
-          <p style={styles.subtitle}>Improve code generation, test training effectiveness, and share insights</p>
+      <div className="bg-gradient-to-br from-[#1E1E1E] to-[#2A2A2A] border-b border-[#424242] p-8">
+        <div className="max-w-[1400px] mx-auto">
+          <h1 className="font-['Rajdhani'] text-[32px] font-bold text-white mb-2 tracking-wide">Training & Learning</h1>
+          <p className="text-[#9E9E9E] text-sm">Improve code generation, test training effectiveness, and share insights</p>
         </div>
       </div>
 
       {/* Content */}
-      <div style={styles.content}>
+      <div className="p-8 max-w-[1400px] mx-auto">
         {/* Error Alert */}
         {error && (
           <Alert style={{ marginBottom: '20px', backgroundColor: '#F4444422', border: '1px solid #F4444444' }}>
@@ -408,24 +301,24 @@ export default function TrainingPage() {
               <div style={{ display: 'grid', gap: '24px' }}>
                 {/* Stats */}
                 {data.stats && (
-                  <div style={styles.card}>
-                    <h2 style={styles.sectionTitle}>Your Training Statistics</h2>
-                    <div style={styles.statsGrid}>
-                      <div style={styles.statItem}>
-                        <div style={styles.statValue}>{data.stats.total}</div>
-                        <div style={styles.statLabel}>Total Examples</div>
+                  <div className="bg-[#1E1E1E] border border-[#424242] rounded-xl p-5">
+                    <h2 className="font-['Rajdhani'] text-lg font-semibold text-white mb-4 tracking-wide">Your Training Statistics</h2>
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-6">
+                      <div className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4">
+                        <div className="font-['Rajdhani'] text-2xl font-bold text-[#FEC00F] mb-1">{data.stats.total}</div>
+                        <div className="text-[#9E9E9E] text-xs font-semibold">Total Examples</div>
                       </div>
-                      <div style={styles.statItem}>
-                        <div style={styles.statValue}>{data.stats.active}</div>
-                        <div style={styles.statLabel}>Active Examples</div>
+                      <div className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4">
+                        <div className="font-['Rajdhani'] text-2xl font-bold text-[#FEC00F] mb-1">{data.stats.active}</div>
+                        <div className="text-[#9E9E9E] text-xs font-semibold">Active Examples</div>
                       </div>
-                      <div style={styles.statItem}>
-                        <div style={styles.statValue}>{data.feedback.length}</div>
-                        <div style={styles.statLabel}>Feedback Submitted</div>
+                      <div className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4">
+                        <div className="font-['Rajdhani'] text-2xl font-bold text-[#FEC00F] mb-1">{data.feedback.length}</div>
+                        <div className="text-[#9E9E9E] text-xs font-semibold">Feedback Submitted</div>
                       </div>
-                      <div style={styles.statItem}>
-                        <div style={styles.statValue}>{data.suggestions.length}</div>
-                        <div style={styles.statLabel}>Suggestions Made</div>
+                      <div className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4">
+                        <div className="font-['Rajdhani'] text-2xl font-bold text-[#FEC00F] mb-1">{data.suggestions.length}</div>
+                        <div className="text-[#9E9E9E] text-xs font-semibold">Suggestions Made</div>
                       </div>
                     </div>
                   </div>
@@ -433,9 +326,9 @@ export default function TrainingPage() {
 
                 {/* Learning Curve Chart Placeholder */}
                 {data.learningCurve && (
-                  <div style={styles.card}>
-                    <h2 style={styles.sectionTitle}>Your Learning Progress</h2>
-                    <div style={{ backgroundColor: '#2A2A2A', borderRadius: '8px', padding: '20px', textAlign: 'center', color: '#9E9E9E', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="bg-[#1E1E1E] border border-[#424242] rounded-xl p-5">
+                    <h2 className="font-['Rajdhani'] text-lg font-semibold text-white mb-4 tracking-wide">Your Learning Progress</h2>
+                    <div className="bg-[#2A2A2A] rounded-lg p-5 text-center text-[#9E9E9E] min-h-[200px] flex items-center justify-center">
                       <p>Learning curve chart will display your code quality improvements over time</p>
                     </div>
                   </div>
@@ -443,11 +336,11 @@ export default function TrainingPage() {
 
                 {/* Popular Patterns */}
                 {data.popularPatterns.length > 0 && (
-                  <div style={styles.card}>
-                    <h2 style={styles.sectionTitle}>Popular Training Patterns</h2>
-                    <div style={styles.grid}>
+                  <div className="bg-[#1E1E1E] border border-[#424242] rounded-xl p-5">
+                    <h2 className="font-['Rajdhani'] text-lg font-semibold text-white mb-4 tracking-wide">Popular Training Patterns</h2>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 mb-6">
                       {data.popularPatterns.slice(0, 6).map((pattern) => (
-                        <div key={pattern.id} style={{ ...styles.knowledgeCard, backgroundColor: '#2A2A2A', cursor: 'default' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#FEC00F'; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#424242'; }}>
+                        <div key={pattern.id} className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4 transition-all hover:border-[#FEC00F]">
                           <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', marginBottom: '8px' }}>
                             <div style={{ fontWeight: 600, color: '#FEC00F', fontSize: '12px' }}>{pattern.training_type}</div>
                             <div style={{ fontSize: '12px', color: '#9E9E9E' }}>{pattern.usage_count}x used</div>
@@ -519,8 +412,8 @@ export default function TrainingPage() {
 
             {/* Test Training Tab */}
             <TabsContent value="test">
-              <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>Test Training Effectiveness</h2>
+              <div className="bg-[#1E1E1E] border border-[#424242] rounded-xl p-5">
+                <h2 className="font-['Rajdhani'] text-lg font-semibold text-white mb-4 tracking-wide">Test Training Effectiveness</h2>
                 <p style={{ color: '#9E9E9E', marginBottom: '16px', fontSize: '14px' }}>Generate code with and without training to see how training improves output quality</p>
 
                 <div style={{ marginBottom: '16px' }}>
@@ -573,14 +466,14 @@ export default function TrainingPage() {
                     <h3 style={{ color: '#FFFFFF', fontSize: '16px', fontWeight: 600, marginBottom: '16px' }}>Test Results</h3>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                      <div style={{ ...styles.card, backgroundColor: '#2A2A2A' }}>
+                      <div className="bg-[#2A2A2A] border border-[#424242] rounded-xl p-5">
                         <div style={{ fontSize: '12px', color: '#9E9E9E', fontWeight: 600, marginBottom: '8px' }}>WITHOUT TRAINING</div>
                         <div style={{ backgroundColor: '#1E1E1E', borderRadius: '6px', padding: '12px', fontFamily: 'monospace', fontSize: '12px', color: '#E0E0E0', maxHeight: '200px', overflowY: 'auto' }}>
                           {testResult.without_training?.code || 'No code generated'}
                         </div>
                       </div>
 
-                      <div style={{ ...styles.card, backgroundColor: '#2A2A2A' }}>
+                      <div className="bg-[#2A2A2A] border border-[#424242] rounded-xl p-5">
                         <div style={{ fontSize: '12px', color: '#FEC00F', fontWeight: 600, marginBottom: '8px' }}>WITH TRAINING</div>
                         <div style={{ backgroundColor: '#1E1E1E', borderRadius: '6px', padding: '12px', fontFamily: 'monospace', fontSize: '12px', color: '#4CAF50', maxHeight: '200px', overflowY: 'auto' }}>
                           {testResult.with_training?.code || 'No code generated'}
@@ -601,8 +494,8 @@ export default function TrainingPage() {
 
             {/* Knowledge Base Tab */}
             <TabsContent value="knowledge">
-              <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>Knowledge Base Search</h2>
+              <div className="bg-[#1E1E1E] border border-[#424242] rounded-xl p-5">
+                <h2 className="font-['Rajdhani'] text-lg font-semibold text-white mb-4 tracking-wide">Knowledge Base Search</h2>
                 <p style={{ color: '#9E9E9E', marginBottom: '16px', fontSize: '14px' }}>Search training examples, rules, and patterns</p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '12px', marginBottom: '24px' }}>
@@ -650,19 +543,11 @@ export default function TrainingPage() {
                 </div>
 
                 {data.knowledgeResults.length > 0 && (
-                  <div style={styles.grid}>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 mb-6">
                     {data.knowledgeResults.map((result, idx) => (
                       <div
                         key={idx}
-                        style={styles.knowledgeCard}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#3A3A3A';
-                          e.currentTarget.style.borderColor = '#FEC00F';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = '#2A2A2A';
-                          e.currentTarget.style.borderColor = '#424242';
-                        }}
+                        className="bg-[#2A2A2A] border border-[#424242] rounded-lg p-4 cursor-pointer transition-all hover:bg-[#3A3A3A] hover:border-[#FEC00F]"
                       >
                         <div style={{ fontSize: '12px', fontWeight: 600, color: '#FEC00F', marginBottom: '8px' }}>
                           Relevance: {(result.relevance_score * 100).toFixed(0)}%
