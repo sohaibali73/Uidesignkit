@@ -12,14 +12,21 @@ import {
   FileCode,
   BookOpen,
   BarChart3,
+  Loader,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth < 1024);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -34,6 +41,30 @@ export function DashboardPage() {
       window.removeEventListener('orientationchange', handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Fetch user stats and recent activity
+      const [userStats, recentActions] = await Promise.all([
+        api.getUserStats(),
+        api.getRecentActivity(),
+      ]);
+      
+      setDashboardData(userStats);
+      setRecentActivity(recentActions || []);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
+      setIsLoading(false);
+    }
+  };
 
   const styles = {
     page: {
@@ -227,17 +258,39 @@ export function DashboardPage() {
 
   const features = features_data;
 
-  const stats = [
-    { label: 'Total Strategies', value: '12', sub: '+2 this week', icon: FileCode, color: '#3B82F6' },
-    { label: 'Documents Uploaded', value: '8', sub: 'Knowledge base', icon: BookOpen, color: '#22C55E' },
-    { label: 'Backtests Analyzed', value: '24', sub: 'Total completed', icon: BarChart3, color: '#8B5CF6' },
-  ];
-
-  const recentActivity = [
-    { id: 1, action: 'Generated AFL code', time: '2 hours ago' },
-    { id: 2, action: 'Uploaded backtest results', time: '4 hours ago' },
-    { id: 3, action: 'Started reverse engineering session', time: '1 day ago' },
-  ];
+  const getStats = () => {
+    if (!dashboardData) {
+      return [
+        { label: 'Total Strategies', value: '0', sub: 'No data', icon: FileCode, color: '#3B82F6' },
+        { label: 'Documents Uploaded', value: '0', sub: 'No data', icon: BookOpen, color: '#22C55E' },
+        { label: 'Backtests Analyzed', value: '0', sub: 'No data', icon: BarChart3, color: '#8B5CF6' },
+      ];
+    }
+    
+    return [
+      { 
+        label: 'Total Strategies', 
+        value: dashboardData.codes_generated?.toString() || '0', 
+        sub: dashboardData.codes_generated > 0 ? '+1 this week' : 'No strategies yet', 
+        icon: FileCode, 
+        color: '#3B82F6' 
+      },
+      { 
+        label: 'Documents Uploaded', 
+        value: dashboardData.documents_uploaded?.toString() || '0', 
+        sub: dashboardData.documents_uploaded > 0 ? 'Knowledge base active' : 'No documents', 
+        icon: BookOpen, 
+        color: '#22C55E' 
+      },
+      { 
+        label: 'Backtests Analyzed', 
+        value: dashboardData.backtests_analyzed?.toString() || '0', 
+        sub: dashboardData.backtests_analyzed > 0 ? 'Total completed' : 'No backtests', 
+        icon: BarChart3, 
+        color: '#8B5CF6' 
+      },
+    ];
+  };
 
   return (
     <div style={styles.page}>
@@ -264,22 +317,57 @@ export function DashboardPage() {
 
       {/* Content */}
       <div style={styles.content}>
+        {/* Loading State */}
+        {isLoading && (
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            padding: '60px 20px', 
+            color: '#9E9E9E' 
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Loader size={24} style={{ animation: 'spin 1s linear infinite' }} />
+              <span>Loading your dashboard...</span>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div style={{ 
+            backgroundColor: '#F4444422', 
+            border: '1px solid #F4444444', 
+            borderRadius: '8px', 
+            padding: '16px', 
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <AlertCircle size={20} style={{ color: '#F44444' }} />
+            <span style={{ color: '#F44444' }}>{error}</span>
+          </div>
+        )}
+
         {/* Stats */}
-        <div style={styles.statsGrid}>
-          {stats.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div key={stat.label} style={styles.statCard}>
-                <div style={styles.statLabel}>
-                  <span style={{ color: '#9E9E9E', fontSize: '14px', fontWeight: 500 }}>{stat.label}</span>
-                  <Icon size={20} style={{ color: stat.color }} />
+        {!isLoading && !error && (
+          <div style={styles.statsGrid}>
+            {getStats().map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div key={stat.label} style={styles.statCard}>
+                  <div style={styles.statLabel}>
+                    <span style={{ color: '#9E9E9E', fontSize: '14px', fontWeight: 500 }}>{stat.label}</span>
+                    <Icon size={20} style={{ color: stat.color }} />
+                  </div>
+                  <div style={styles.statValue}>{stat.value}</div>
+                  <div style={{ color: '#757575', fontSize: '12px' }}>{stat.sub}</div>
                 </div>
-                <div style={styles.statValue}>{stat.value}</div>
-                <div style={{ color: '#757575', fontSize: '12px' }}>{stat.sub}</div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Features */}
         <h2 style={styles.sectionTitle}>
@@ -317,29 +405,39 @@ export function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <h2 style={styles.sectionTitle}>
-          <Sparkles size={20} style={{ color: '#FEC00F' }} />
-          RECENT ACTIVITY
-        </h2>
-        <div style={styles.activityCard}>
-          {recentActivity.map((activity, index) => (
-            <div
-              key={activity.id}
-              style={{
-                ...styles.activityItem,
-                borderBottom: index === recentActivity.length - 1 ? 'none' : '1px solid #424242',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2A2A2A'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '8px', height: '8px', backgroundColor: '#FEC00F', borderRadius: '50%' }} />
-                <span style={{ color: '#FFFFFF', fontSize: '14px' }}>{activity.action}</span>
-              </div>
-              <span style={{ color: '#757575', fontSize: '13px' }}>{activity.time}</span>
+        {!isLoading && !error && (
+          <>
+            <h2 style={styles.sectionTitle}>
+              <Sparkles size={20} style={{ color: '#FEC00F' }} />
+              RECENT ACTIVITY
+            </h2>
+            <div style={styles.activityCard}>
+              {recentActivity.length > 0 ? (
+                recentActivity.map((activity, index) => (
+                  <div
+                    key={activity.id || index}
+                    style={{
+                      ...styles.activityItem,
+                      borderBottom: index === recentActivity.length - 1 ? 'none' : '1px solid #424242',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#2A2A2A'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '8px', height: '8px', backgroundColor: '#FEC00F', borderRadius: '50%' }} />
+                      <span style={{ color: '#FFFFFF', fontSize: '14px' }}>{activity.action || 'No recent activity'}</span>
+                    </div>
+                    <span style={{ color: '#757575', fontSize: '13px' }}>{activity.time || 'Just now'}</span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ padding: '20px', textAlign: 'center', color: '#757575' }}>
+                  No recent activity yet. Start by generating your first AFL code!
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
