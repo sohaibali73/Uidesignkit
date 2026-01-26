@@ -300,7 +300,7 @@ export function AdminPage() {
           </Alert>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList style={{ backgroundColor: 'transparent', borderBottom: '2px solid #424242', marginBottom: '24px', padding: '0', height: 'auto', display: 'flex', gap: '0' }}>
             <TabsTrigger value="overview" style={{ color: activeTab === 'overview' ? '#FEC00F' : '#9E9E9E', backgroundColor: 'transparent', border: 'none', borderBottom: activeTab === 'overview' ? '3px solid #FEC00F' : 'none', borderRadius: '0', padding: '12px 20px', fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, fontSize: '14px', letterSpacing: '0.5px', transition: 'all 0.2s ease', cursor: 'pointer', textTransform: 'uppercase' }}>
               <BarChart3 style={{ marginRight: '8px', width: '16px', height: '16px' }} />
