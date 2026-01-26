@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { TabProvider } from './contexts/TabContext';
 import { ProtectedRoute } from './components/ProtectedRoute';  // Named import
 import { MainLayout } from './layouts/MainLayout';              // Named import
 
@@ -35,7 +36,9 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <MainLayout />
+                  <TabProvider>
+                    <MainLayout />
+                  </TabProvider>
                 </ProtectedRoute>
               }
             >

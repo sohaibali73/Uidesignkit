@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { useTabs } from '@/contexts/TabContext';
 import { api } from '@/lib/api';
 
 // API client using the centralized apiClient
@@ -174,7 +175,7 @@ const AlertDescription = ({ children, style }) => (
 
 export function AdminPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const { getTabState, setActiveTab } = useTabs();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -184,6 +185,10 @@ export function AdminPage() {
   const [feedback, setFeedback] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [analytics, setAnalytics] = useState(null);
+
+  // Get saved tab state for this page
+  const pageTabState = getTabState('admin');
+  const [activeTab, setActiveTabState] = useState(pageTabState.activeTab);
 
   useEffect(() => {
     loadAdminData();
@@ -196,6 +201,41 @@ export function AdminPage() {
       setIsLoading(false);
     }
   }, [user]);
+
+  // Load data for specific tabs on demand to preserve work
+  const loadTabData = async (tab: string) => {
+    try {
+      switch (tab) {
+        case 'users':
+          const usersList = await apiClient.getUsers();
+          setUsers(usersList);
+          break;
+        case 'content':
+          const training = await apiClient.getTrainingList({ limit: 100 });
+          setTrainingList(training);
+          break;
+        case 'settings':
+          const [feedbackList, suggestionsList] = await Promise.all([
+            apiClient.getAllFeedback({ limit: 100 }),
+            apiClient.getAllSuggestions(),
+          ]);
+          setFeedback(feedbackList);
+          setSuggestions(suggestionsList);
+          break;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : `Failed to load ${tab} data`);
+    }
+  };
+
+  const handleTabChange = (newTab: string) => {
+    setActiveTabState(newTab);
+    setActiveTab('admin', newTab);
+    // Load data for the new tab if needed
+    if (newTab !== 'overview') {
+      loadTabData(newTab);
+    }
+  };
 
   const loadAdminData = async () => {
     try {
