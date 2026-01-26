@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TerminalHeader } from '../components/researcher/TerminalHeader';
-import { TerminalDashboard } from '../components/researcher/TerminalDashboard';
+import TerminalHeader from '../components/researcher/TerminalHeader';
+import TerminalDashboard from '../components/researcher/TerminalDashboard';
 import { Search, TrendingUp, BarChart3, Newspaper, Building, DollarSign, Settings } from 'lucide-react';
 
 export const Researcher: React.FC = () => {

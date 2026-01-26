@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useResearcher } from '../hooks/useResearcher';
-import { CompanyResearchTerminal } from '../components/researcher/CompanyResearchTerminal';
+import CompanyResearchTerminal from '../components/researcher/CompanyResearchTerminal';
 
 export const CompanyResearch: React.FC = () => {
   const { symbol } = useParams<{ symbol: string }>();
