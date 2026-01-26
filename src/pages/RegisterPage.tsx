@@ -25,7 +25,7 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmShowPassword] = useState(false);
   const [showClaudeKey, setShowClaudeKey] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth < 768);
@@ -68,7 +68,7 @@ export function RegisterPage() {
       setError('Please enter your email');
       return false;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (!/^[\w.-]+@[\w.-]+\.[A-Za-z]{2,3}$/.test(formData.email)) {
       setError('Please enter a valid email address');
       return false;
     }
@@ -264,7 +264,7 @@ export function RegisterPage() {
         borderTop: isMobile ? '1px solid #2A2A2A' : 'none',
         overflowY: 'auto',
         minHeight: isMobile ? 'auto' : '100dvh',
-        paddingBottom: isSmallMobile ? 'max(32px, env(safe-area-inset-bottom))' : '60px',
+        paddingBottom: isSmallMobile ? 'max(60px, env(safe-area-inset-bottom))' : '60px',
       }}>
         <div style={{ maxWidth: '400px', margin: '0 auto', width: '100%' }}>
           {/* Logo */}
@@ -654,7 +654,7 @@ export function RegisterPage() {
                       width: '22px',
                       height: '22px',
                       borderRadius: '6px',
-                      border: `2px solid ${formData.agreeToTerms ? '#FEC00F' : '#2A2A2A'}`,
+                      border: `2px solid ${formData.agreeToTerms ? '#FEC00F' : '#2A2A2A'}`, 
                       backgroundColor: formData.agreeToTerms ? '#FEC00F' : 'transparent',
                       display: 'flex',
                       alignItems: 'center',
@@ -726,7 +726,6 @@ export function RegisterPage() {
         minHeight: isMobile ? 'auto' : '100dvh',
         paddingTop: isMobile ? '40px' : '60px',
         paddingBottom: isSmallMobile ? 'max(60px, env(safe-area-inset-bottom))' : '60px',
-      }}>
       }}>
         {/* Background Effects */}
         <div style={{
@@ -802,7 +801,7 @@ export function RegisterPage() {
 
           {/* Features */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
-            {[
+            {[ 
               { icon: Zap, text: 'AI-Powered AFL Code Generation' },
               { icon: BarChart3, text: 'Advanced Backtest Analysis' },
               { icon: Shield, text: 'Enterprise-Grade Security' },

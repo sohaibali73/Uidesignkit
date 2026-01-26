@@ -14,8 +14,8 @@ import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { BacktestPage } from './pages/BacktestPage';
 import { ReverseEngineerPage } from './pages/ReverseEngineerPage';  // Named import
 import { SettingsPage } from './pages/SettingsPage';
-import TrainingPage from './pages/TrainingPage';
-import { AdminPage } from './pages/AdminPage';
+
+// Add this route inside the protected routes:
 
 
 
@@ -26,34 +26,32 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          
-          {/* Protected Routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <MainLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<DashboardPage />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="afl" element={<AFLGeneratorPage />} />
-            <Route path="afl-generator" element={<AFLGeneratorPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-            <Route path="chat" element={<ChatPage />} />
-            <Route path="knowledge" element={<KnowledgeBasePage />} />
-            <Route path="knowledge-base" element={<KnowledgeBasePage />} />
-            <Route path="backtest" element={<BacktestPage />} />
-            <Route path="reverse-engineer" element={<ReverseEngineerPage />} />
-            <Route path="training" element={<TrainingPage />} />
-            <Route path="admin" element={<AdminPage />} />
-          </Route>
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Public Routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            
+            {/* Protected Routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardPage />} />
+              <Route path="dashboard" element={<DashboardPage />} />
+              <Route path="afl" element={<AFLGeneratorPage />} />
+              <Route path="afl-generator" element={<AFLGeneratorPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="chat" element={<ChatPage />} />
+              <Route path="knowledge" element={<KnowledgeBasePage />} />
+              <Route path="knowledge-base" element={<KnowledgeBasePage />} />
+              <Route path="backtest" element={<BacktestPage />} />
+              <Route path="reverse-engineer" element={<ReverseEngineerPage />} />
+            </Route>
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

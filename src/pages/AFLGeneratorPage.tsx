@@ -23,27 +23,12 @@ export function AFLGeneratorPage() {
     setError('');
     
     try {
-      // Get token from localStorage
-      const token = localStorage.getItem('auth_token');
-      
-      const response = await fetch(`${API_BASE_URL}/afl/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          prompt: prompt,
-          strategy_type: strategyType,
-        }),
+      const result = await api.afl.generate({
+        prompt: prompt,
+        strategy_type: strategyType,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate code');
-      }
-
-      const result = await response.json();
       setGeneratedCode(result.code || '// Generated code will appear here');
+      setCodeId(result.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate code');
     } finally {

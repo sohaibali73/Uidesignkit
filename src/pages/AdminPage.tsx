@@ -12,28 +12,51 @@ import {
   Search,
   Loader,
 } from 'lucide-react';
+
 import { useAuth } from '@/contexts/AuthContext';
-import apiClient from '@/lib/api';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { api } from '@/lib/api';
+
+// API client using the centralized apiClient
+const apiClient = {
+  getAdminStatus: async () => {
+    return await api.getAdminStatus();
+  },
+  
+  getUsers: async () => {
+    return await api.getUsers();
+  },
+  
+  getTrainingList: async (params = {}) => {
+    return await api.getTrainingList(params);
+  },
+  
+  getAllFeedback: async (params = {}) => {
+    return await api.getAllFeedback(params);
+  },
+  
+  getAllSuggestions: async () => {
+    return await api.getAllSuggestions();
+  },
+  
+  getAnalyticsOverview: async () => {
+    return await api.getAnalyticsOverview();
+  },
+};
 
 const styles = {
   page: {
     minHeight: '100vh',
     fontFamily: "'Quicksand', sans-serif",
-  } as React.CSSProperties,
+  },
   header: {
     borderBottom: '1px solid #424242',
     padding: '32px',
     transition: 'background-color 0.3s ease',
-  } as React.CSSProperties,
+  },
   headerContent: {
     maxWidth: '1400px',
     margin: '0 auto',
-  } as React.CSSProperties,
+  },
   title: {
     fontFamily: "'Rajdhani', sans-serif",
     fontSize: '32px',
@@ -41,47 +64,47 @@ const styles = {
     marginBottom: '8px',
     letterSpacing: '1px',
     textTransform: 'uppercase',
-  } as React.CSSProperties,
+  },
   subtitle: {
     fontSize: '14px',
     fontFamily: "'Quicksand', sans-serif",
     fontWeight: 500,
-  } as React.CSSProperties,
+  },
   content: {
     padding: '32px',
     maxWidth: '1400px',
     margin: '0 auto',
-  } as React.CSSProperties,
+  },
   card: {
     backgroundColor: '#1E1E1E',
     border: '1px solid #424242',
     borderRadius: '12px',
     padding: '20px',
-  } as React.CSSProperties,
+  },
   statsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
     gap: '16px',
     marginBottom: '24px',
-  } as React.CSSProperties,
+  },
   statItem: {
     backgroundColor: '#2A2A2A',
     border: '1px solid #424242',
     borderRadius: '8px',
     padding: '16px',
-  } as React.CSSProperties,
+  },
   statValue: {
     fontFamily: "'Rajdhani', sans-serif",
     fontSize: '28px',
     fontWeight: 700,
     color: '#FEC00F',
     marginBottom: '4px',
-  } as React.CSSProperties,
+  },
   statLabel: {
     color: '#9E9E9E',
     fontSize: '12px',
     fontWeight: 600,
-  } as React.CSSProperties,
+  },
   sectionTitle: {
     fontFamily: "'Rajdhani', sans-serif",
     fontSize: '18px',
@@ -89,69 +112,96 @@ const styles = {
     marginBottom: '16px',
     letterSpacing: '0.5px',
     textTransform: 'uppercase',
-  } as React.CSSProperties,
+  },
   table: {
     width: '100%',
-    borderCollapse: 'collapse' as const,
-  } as React.CSSProperties,
+    borderCollapse: 'collapse',
+  },
   tableHeader: {
     backgroundColor: '#2A2A2A',
     color: '#FFFFFF',
     padding: '12px',
-    textAlign: 'left' as const,
+    textAlign: 'left',
     fontSize: '13px',
     fontWeight: 600,
     borderBottom: '1px solid #424242',
-  } as React.CSSProperties,
+  },
   tableCell: {
     padding: '12px',
     borderBottom: '1px solid #424242',
     color: '#E0E0E0',
     fontSize: '13px',
-  } as React.CSSProperties,
+  },
   tableRow: {
     backgroundColor: 'transparent',
     transition: 'background-color 0.2s',
-  } as React.CSSProperties,
-  buttonGroup: {
-    display: 'flex',
-    gap: '8px',
-  } as React.CSSProperties,
-  inputField: {
-    backgroundColor: '#2A2A2A',
-    border: '1px solid #424242',
-    color: '#FFFFFF',
-    borderRadius: '6px',
-    padding: '8px 12px',
-    fontFamily: "'Quicksand', sans-serif",
-    fontSize: '13px',
-  } as React.CSSProperties,
+  },
 };
+
+const Tabs = ({ value, onValueChange, children }) => {
+  return React.Children.map(children, child => {
+    if (child.type === TabsList || child.type === TabsContent) {
+      return React.cloneElement(child, { activeTab: value, onTabChange: onValueChange });
+    }
+    return child;
+  });
+};
+
+const TabsList = ({ children, style, activeTab, onTabChange }) => (
+  <div style={style}>
+    {React.Children.map(children, child => 
+      React.cloneElement(child, { activeTab, onTabChange })
+    )}
+  </div>
+);
+
+const TabsTrigger = ({ value, children, style, activeTab, onTabChange }) => (
+  <button onClick={() => onTabChange(value)} style={style}>
+    {children}
+  </button>
+);
+
+const TabsContent = ({ value, children, activeTab }) => 
+  activeTab === value ? <div>{children}</div> : null;
+
+const Alert = ({ children, style }) => (
+  <div style={style}>{children}</div>
+);
+
+const AlertDescription = ({ children, style }) => (
+  <div style={style}>{children}</div>
+);
 
 export function AdminPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
   
-  // Data state
-  const [adminStatus, setAdminStatus] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
-  const [trainingList, setTrainingList] = useState<any[]>([]);
-  const [feedback, setFeedback] = useState<any[]>([]);
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [adminStatus, setAdminStatus] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [trainingList, setTrainingList] = useState([]);
+  const [feedback, setFeedback] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
     loadAdminData();
   }, []);
+
+  // Check if user is admin
+  useEffect(() => {
+    if (user && !user.is_admin) {
+      setError('Access denied. Admin privileges required.');
+      setIsLoading(false);
+    }
+  }, [user]);
 
   const loadAdminData = async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // Load all admin data in parallel
       const [status, usersList, training, feedbackList, suggestionsList, analyticsData] = await Promise.all([
         apiClient.getAdminStatus(),
         apiClient.getUsers(),
@@ -185,7 +235,7 @@ export function AdminPage() {
         </div>
         <div style={{ ...styles.content, backgroundColor: '#121212' }}>
           <div style={{ textAlign: 'center', padding: '60px 20px', color: '#9E9E9E' }}>
-            <Loader style={{ width: '32px', height: '32px', animation: 'spin 2s linear infinite', marginBottom: '16px', display: 'inline-block' }} />
+            <Loader style={{ width: '32px', height: '32px', marginBottom: '16px', display: 'inline-block' }} />
             <p>Loading admin data...</p>
           </div>
         </div>
@@ -195,7 +245,6 @@ export function AdminPage() {
 
   return (
     <div style={{ ...styles.page, backgroundColor: '#121212' }}>
-      {/* Header */}
       <div style={{ ...styles.header, backgroundColor: '#1E1E1E', borderColor: '#424242' }}>
         <div style={styles.headerContent}>
           <h1 style={{ ...styles.title, color: '#FFFFFF' }}>Admin Panel</h1>
@@ -203,7 +252,6 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/* Content */}
       <div style={{ ...styles.content, backgroundColor: '#121212' }}>
         {error && (
           <Alert style={{ marginBottom: '20px', backgroundColor: '#F4444422', border: '1px solid #F4444444' }}>
@@ -232,12 +280,11 @@ export function AdminPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab */}
           <TabsContent value="overview">
             <div style={{ display: 'grid', gap: '24px' }}>
               {adminStatus && (
                 <div style={styles.card}>
-                  <h2 style={styles.sectionTitle}>System Statistics</h2>
+                  <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>System Statistics</h2>
                   <div style={styles.statsGrid}>
                     <div style={styles.statItem}>
                       <div style={styles.statValue}>{adminStatus.stats.total_users}</div>
@@ -262,7 +309,7 @@ export function AdminPage() {
               {analytics && (
                 <>
                   <div style={styles.card}>
-                    <h2 style={styles.sectionTitle}>Feedback Analytics</h2>
+                    <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>Feedback Analytics</h2>
                     <div style={styles.statsGrid}>
                       <div style={styles.statItem}>
                         <div style={styles.statValue}>{analytics.feedback.total}</div>
@@ -284,7 +331,7 @@ export function AdminPage() {
                   </div>
                   
                   <div style={styles.card}>
-                    <h2 style={styles.sectionTitle}>Code Generation</h2>
+                    <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>Code Generation</h2>
                     <div style={styles.statsGrid}>
                       <div style={styles.statItem}>
                         <div style={styles.statValue}>{analytics.code_generation.total_codes}</div>
@@ -305,10 +352,9 @@ export function AdminPage() {
             </div>
           </TabsContent>
 
-          {/* Users Tab */}
           <TabsContent value="users">
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>User Management</h2>
+              <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>User Management</h2>
               <div style={{ overflowX: 'auto' }}>
                 <table style={styles.table}>
                   <thead>
@@ -346,10 +392,9 @@ export function AdminPage() {
             </div>
           </TabsContent>
 
-          {/* Content Tab */}
           <TabsContent value="content">
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Training Management</h2>
+              <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>Training Management</h2>
               <p style={{ color: '#9E9E9E', marginBottom: '20px', fontSize: '14px' }}>Active training examples ({trainingList.length} total)</p>
               <div style={{ overflowX: 'auto' }}>
                 <table style={styles.table}>
@@ -390,11 +435,10 @@ export function AdminPage() {
             </div>
           </TabsContent>
 
-          {/* Settings Tab */}
           <TabsContent value="settings">
             <div style={{ display: 'grid', gap: '24px' }}>
               <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>Pending Reviews</h2>
+                <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>Pending Reviews</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                   <div style={{ ...styles.statItem, textAlign: 'center' }}>
                     <div style={styles.statValue}>{feedback.filter((f) => f.status === 'pending_review').length}</div>
@@ -408,7 +452,7 @@ export function AdminPage() {
               </div>
 
               <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>Recent Feedback</h2>
+                <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>Recent Feedback</h2>
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {feedback.slice(0, 5).map((f) => (
                     <div key={f.id} style={{ padding: '12px', backgroundColor: '#2A2A2A', borderRadius: '8px', borderLeft: '3px solid #FEC00F' }}>
@@ -430,7 +474,7 @@ export function AdminPage() {
               </div>
 
               <div style={styles.card}>
-                <h2 style={styles.sectionTitle}>Recent Suggestions</h2>
+                <h2 style={{ ...styles.sectionTitle, color: '#FFFFFF' }}>Recent Suggestions</h2>
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {suggestions.slice(0, 5).map((s) => (
                     <div key={s.id} style={{ padding: '12px', backgroundColor: '#2A2A2A', borderRadius: '8px', borderLeft: '3px solid #2196F3' }}>
@@ -461,3 +505,5 @@ export function AdminPage() {
     </div>
   );
 }
+
+export default AdminPage;

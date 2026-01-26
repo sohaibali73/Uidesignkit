@@ -49,7 +49,7 @@ import {
   TrainingTypeInfo,
 } from '@/types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://potomac-analyst-workbench-production.up.railway.app';
 
 class APIClient {
   private token: string | null = null;
