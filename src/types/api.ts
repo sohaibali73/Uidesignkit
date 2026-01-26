@@ -1,5 +1,6 @@
 // API Types and Interfaces
 
+// Basic Types
 export interface User {
   id: string;
   email: string;
@@ -14,22 +15,15 @@ export interface AuthResponse {
   token_type: string;
   user_id: string;
   email: string;
-  user?: User;
 }
 
+// Chat Types
 export interface Message {
   id: string;
   conversation_id: string;
   content: string;
   role: 'user' | 'assistant';
   created_at: string;
-  tools_used?: ToolUsage[];
-}
-
-export interface ToolUsage {
-  tool: string;
-  input: Record<string, any>;
-  result_preview?: string;
 }
 
 export interface Conversation {
@@ -40,6 +34,7 @@ export interface Conversation {
   updated_at: string;
 }
 
+// AFL Types
 export interface AFLGenerateRequest {
   prompt: string;
   strategy_type?: 'standalone' | 'entry' | 'exit';
@@ -59,13 +54,11 @@ export interface AFLCode {
   description: string;
   explanation?: string;
   strategy_type: string;
-  stats?: {
-    quality_score?: number;
-  };
   created_at: string;
   updated_at: string;
 }
 
+// Document Types
 export interface Document {
   id: string;
   filename: string;
@@ -83,6 +76,13 @@ export interface SearchResult {
   filename: string;
 }
 
+export interface BrainStats {
+  total_documents: number;
+  total_size: number;
+  categories: Record<string, number>;
+}
+
+// Backtest Types
 export interface BacktestResult {
   id: string;
   strategy_id?: string;
@@ -112,6 +112,7 @@ export interface BacktestRecommendation {
   implementation?: string;
 }
 
+// Strategy Types
 export interface Strategy {
   id: string;
   name: string;
@@ -122,14 +123,7 @@ export interface Strategy {
   updated_at: string;
 }
 
-export interface BrainStats {
-  total_documents: number;
-  total_size: number;
-  categories: Record<string, number>;
-}
-
-// ==================== TRAINING TYPES ====================
-
+// Training Types
 export type TrainingType = 'example' | 'rule' | 'pattern' | 'anti_pattern' | 'correction' | 'terminology';
 export type TrainingCategory = 'afl' | 'general' | 'trading' | 'backtesting';
 
@@ -144,7 +138,6 @@ export interface TrainingData {
   tags?: string[];
   priority: number;
   is_active: boolean;
-  created_by?: string;
   created_at: string;
   updated_at: string;
   usage_count?: number;
@@ -182,8 +175,7 @@ export interface TrainingStats {
   by_category: Record<string, number>;
 }
 
-// ==================== FEEDBACK TYPES ====================
-
+// Feedback Types
 export type FeedbackType = 'correction' | 'improvement' | 'bug' | 'praise';
 export type FeedbackStatus = 'pending_review' | 'reviewed' | 'implemented' | 'rejected';
 
@@ -222,8 +214,7 @@ export interface FeedbackReviewRequest {
   create_training?: boolean;
 }
 
-// ==================== TRAINING SUGGESTION TYPES ====================
-
+// Suggestion Types
 export type SuggestionStatus = 'pending' | 'approved' | 'rejected' | 'implemented';
 
 export interface TrainingSuggestion {
@@ -258,8 +249,7 @@ export interface SuggestionReviewRequest {
   priority?: number;
 }
 
-// ==================== ANALYTICS TYPES ====================
-
+// Analytics Types
 export interface AnalyticsOverview {
   users: {
     total: number;
@@ -312,8 +302,7 @@ export interface PopularPattern {
   category: TrainingCategory;
 }
 
-// ==================== ADMIN TYPES ====================
-
+// Admin Types
 export interface AdminStatus {
   status: string;
   admin_id: string;
@@ -341,8 +330,7 @@ export interface AdminConfig {
   features: Record<string, boolean>;
 }
 
-// ==================== TRAINING TEST TYPES ====================
-
+// Test Types
 export interface TrainingTestRequest {
   prompt: string;
   category?: TrainingCategory;
@@ -369,8 +357,7 @@ export interface TrainingEffectiveness {
   most_effective_rules: TrainingData[];
 }
 
-// ==================== KNOWLEDGE BASE TYPES ====================
-
+// Knowledge Types
 export interface KnowledgeSearchResult {
   id: string;
   title: string;
@@ -392,14 +379,8 @@ export interface TrainingTypeInfo {
   count: number;
 }
 
-// Request/Response types
+// Utility Types
 export interface ApiError {
   detail: string;
   status_code?: number;
-}
-
-export interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  status: 'success' | 'error';
 }

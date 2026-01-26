@@ -1,6 +1,6 @@
 import React from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, DollarSign, Users, Activity, BarChart3, Clock } from 'lucide-react';
+import { TrendingUp, DollarSign, Users, Activity, BarChart3, Clock, Newspaper } from 'lucide-react';
 
 interface TerminalDashboardProps {
   symbol?: string;

@@ -11,11 +11,13 @@ import {
   BarChart3
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import yellowLogo from '@/assets/yellowlogo.png';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { resolvedTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -61,7 +63,7 @@ export function LoginPage() {
   return (
     <div style={{
       minHeight: '100dvh',
-      backgroundColor: '#0A0A0B',
+      backgroundColor: resolvedTheme === 'dark' ? '#0A0A0B' : '#ffffff',
       display: 'flex',
       fontFamily: "'Quicksand', sans-serif",
       flexDirection: isMobile ? 'column' : 'row',
@@ -71,7 +73,9 @@ export function LoginPage() {
       {/* Left Side - Branding */}
       <div style={{
         flex: isMobile ? undefined : 1,
-        background: 'linear-gradient(135deg, #1A1A1D 0%, #0A0A0B 50%, #1A1A1D 100%)',
+        background: resolvedTheme === 'dark' 
+          ? 'linear-gradient(135deg, #1A1A1D 0%, #0A0A0B 50%, #1A1A1D 100%)'
+          : 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 50%, #f8f9fa 100%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',

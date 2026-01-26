@@ -48,8 +48,9 @@ import {
   KnowledgeCategory,
   TrainingTypeInfo,
 } from '@/types/api';
+import { MacroContext, SECFiling, ResearchSearchResult, ReportExport, ResearcherHealth } from '@/types/researcher';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://potomac-analyst-workbench-production.up.railway.app';
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://potomac-analyst-workbench-production.up.railway.app';
 
 class APIClient {
   private token: string | null = null;
@@ -523,6 +524,64 @@ class APIClient {
     return this.request<{ success: boolean }>(`/admin/config/add-admin-email?email=${encodeURIComponent(email)}`, 'POST');
   }
 
+  // ==================== RESEARCHER ENDPOINTS ====================
+
+  async getCompanyResearch(symbol: string) {
+    return this.request<CompanyResearch>(`/api/researcher/company/${symbol}`, 'GET');
+  }
+
+  async getCompanyNews(symbol: string, limit: number = 20) {
+    return this.request<{ news: NewsItem[] }>(`/api/researcher/news/${symbol}?limit=${limit}`, 'GET');
+  }
+
+  async analyzeStrategyFit(symbol: string, strategyType: string, timeframe: string) {
+    return this.request<StrategyAnalysis>('/api/researcher/strategy-analysis', 'POST', {
+      symbol,
+      strategy_type: strategyType,
+      timeframe
+    });
+  }
+
+  async getPeerComparison(symbol: string, peers: string[]) {
+    return this.request<PeerComparison>('/api/researcher/comparison', 'POST', {
+      symbol,
+      peers
+    });
+  }
+
+  async getSECFilings(symbol: string) {
+    return this.request<SECFiling[]>(`/api/researcher/sec-filings/${symbol}`, 'GET');
+  }
+
+  async getMacroContext() {
+    return this.request<MacroContext>('/api/researcher/macro-context', 'GET');
+  }
+
+  async generateReport(symbol: string, reportType: string, sections: string[], format: string = 'json') {
+    return this.request<ResearchReport>('/api/researcher/generate-report', 'POST', {
+      symbol,
+      report_type: reportType,
+      sections,
+      format
+    });
+  }
+
+  async exportReport(reportId: string, format: string) {
+    return this.request<ReportExport>(`/api/researcher/reports/${reportId}/export?format=${format}`, 'GET');
+  }
+
+  async searchResearch(query: string, searchType: string, limit: number = 10) {
+    return this.request<ResearchSearchResult[]>(`/api/researcher/search?query=${encodeURIComponent(query)}&search_type=${searchType}&limit=${limit}`, 'GET');
+  }
+
+  async getTrendingResearch(limit: number = 10) {
+    return this.request<ResearchSearchResult[]>(`/api/researcher/trending?limit=${limit}`, 'GET');
+  }
+
+  async getResearcherHealth() {
+    return this.request<ResearcherHealth>('/api/researcher/health', 'GET');
+  }
+
   // ==================== UTILITY ENDPOINTS ====================
 
   async checkHealth() {
@@ -536,106 +595,3 @@ class APIClient {
 
 export const apiClient = new APIClient();
 export default apiClient;
-
-// Compatibility layer for pages expecting 'api'
-export const api = {
-  auth: {
-    login: (email: string, password: string) => apiClient.login(email, password),
-    register: (data: any) => apiClient.register(data.email, data.password, data.name, data.claude_api_key, data.tavily_api_key),
-    getMe: () => apiClient.getCurrentUser(),
-  },
-  afl: {
-    generate: (prompt: string, strategyType?: string, settings?: any) =>
-      apiClient.generateAFL({ prompt, strategy_type: strategyType as any, settings }),
-    optimize: (code: string) => apiClient.optimizeAFL(code),
-    debug: (code: string, errorMessage?: string) => apiClient.debugAFL(code, errorMessage),
-    explain: (code: string) => apiClient.explainAFL(code),
-    validate: (code: string) => apiClient.validateAFL(code),
-    getCodes: () => apiClient.getAFLCodes(),
-    getCode: (codeId: string) => apiClient.getAFLCode(codeId),
-    deleteCode: (codeId: string) => apiClient.deleteAFLCode(codeId),
-  },
-  chat: {
-    getConversations: () => apiClient.getConversations(),
-    createConversation: () => apiClient.createConversation(),
-    getMessages: (conversationId: string) => apiClient.getMessages(conversationId),
-    deleteConversation: (conversationId: string) => apiClient.deleteConversation(conversationId),
-    sendMessage: (content: string, conversationId?: string) => apiClient.sendMessage(content, conversationId),
-    getTools: () => apiClient.getChatTools(),
-  },
-  brain: {
-    uploadDocument: (file: File, category?: string) => apiClient.uploadDocument(file, undefined, category),
-    search: (query: string, category?: string, limit?: number) => apiClient.searchKnowledge(query, category, limit),
-    getDocuments: () => apiClient.getDocuments(),
-    getStats: () => apiClient.getBrainStats(),
-    deleteDocument: (documentId: string) => apiClient.deleteDocument(documentId),
-  },
-  backtest: {
-    upload: (file: File, strategyId?: string) => apiClient.uploadBacktest(file, strategyId),
-    getBacktest: (backtestId: string) => apiClient.getBacktest(backtestId),
-    getStrategyBacktests: (strategyId: string) => apiClient.getStrategyBacktests(strategyId),
-  },
-  reverseEngineer: {
-    startSession: (query: string) => apiClient.startReverseEngineering(query),
-    continue: (strategyId: string, message: string) => apiClient.continueReverseEngineering(strategyId, message),
-    research: (strategyId: string) => apiClient.researchStrategy(strategyId),
-    generateSchematic: (strategyId: string) => apiClient.generateStrategySchematic(strategyId),
-    generateCode: (strategyId: string) => apiClient.generateStrategyCode(strategyId),
-    getStrategy: (strategyId: string) => apiClient.getStrategy(strategyId),
-  },
-  train: {
-    submitFeedback: (feedback: FeedbackCreateRequest) => apiClient.submitFeedback(feedback),
-    getMyFeedback: () => apiClient.getMyFeedback(),
-    getFeedback: (feedbackId: string) => apiClient.getFeedback(feedbackId),
-    testTraining: (request: TrainingTestRequest) => apiClient.testTraining(request),
-    getEffectiveness: () => apiClient.getTrainingEffectiveness(),
-    suggest: (suggestion: SuggestionCreateRequest) => apiClient.suggestTraining(suggestion),
-    getMySuggestions: () => apiClient.getMySuggestions(),
-    getLearningCurve: () => apiClient.getLearningCurve(),
-    getPopularPatterns: () => apiClient.getPopularPatterns(),
-    searchKnowledge: (query: string, category?: TrainingCategory, limit?: number) =>
-      apiClient.searchTrainingKnowledge(query, category, limit),
-    getCategories: () => apiClient.getKnowledgeCategories(),
-    getTypes: () => apiClient.getTrainingTypes(),
-    quickLearn: (code: string, explanation: string) => apiClient.quickLearn(code, explanation),
-    getStats: () => apiClient.getTrainStats(),
-  },
-  admin: {
-    getStatus: () => apiClient.getAdminStatus(),
-    makeAdmin: (userId: string) => apiClient.makeAdmin(userId),
-    revokeAdmin: (userId: string) => apiClient.revokeAdmin(userId),
-    // Training
-    addTraining: (training: TrainingCreateRequest) => apiClient.addTraining(training),
-    quickTrain: (request: QuickTrainRequest) => apiClient.quickTrain(request),
-    addCorrection: (correction: CorrectionRequest) => apiClient.addCorrection(correction),
-    batchImport: (items: TrainingCreateRequest[]) => apiClient.batchImportTraining(items),
-    getTrainingList: (params?: any) => apiClient.getTrainingList(params),
-    getTraining: (id: string) => apiClient.getTraining(id),
-    updateTraining: (id: string, updates: any) => apiClient.updateTraining(id, updates),
-    deleteTraining: (id: string) => apiClient.deleteTraining(id),
-    toggleTraining: (id: string) => apiClient.toggleTraining(id),
-    getTrainingStats: () => apiClient.getTrainingStatsOverview(),
-    exportTraining: (params?: any) => apiClient.exportTraining(params),
-    previewContext: (category?: TrainingCategory) => apiClient.previewTrainingContext(category),
-    // Users
-    getUsers: () => apiClient.getUsers(),
-    getUser: (id: string) => apiClient.getUser(id),
-    deleteUser: (id: string) => apiClient.deleteUser(id),
-    // Feedback
-    getAllFeedback: (params?: any) => apiClient.getAllFeedback(params),
-    getFeedback: (id: string) => apiClient.getAdminFeedback(id),
-    reviewFeedback: (id: string, review: FeedbackReviewRequest) => apiClient.reviewFeedback(id, review),
-    // Suggestions
-    getAllSuggestions: (status?: SuggestionStatus) => apiClient.getAllSuggestions(status),
-    getSuggestion: (id: string) => apiClient.getSuggestion(id),
-    reviewSuggestion: (id: string, review: SuggestionReviewRequest) => apiClient.reviewSuggestion(id, review),
-    approveSuggestion: (id: string, priority?: number) => apiClient.approveSuggestion(id, priority),
-    rejectSuggestion: (id: string, reason?: string) => apiClient.rejectSuggestion(id, reason),
-    // Analytics
-    getAnalytics: () => apiClient.getAnalyticsOverview(),
-    getTrends: () => apiClient.getAnalyticsTrends(),
-    // Config
-    getConfig: () => apiClient.getAdminConfig(),
-    addAdminEmail: (email: string) => apiClient.addAdminEmail(email),
-  },
-};

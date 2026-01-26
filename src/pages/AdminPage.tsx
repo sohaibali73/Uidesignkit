@@ -15,34 +15,8 @@ import {
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useTabs } from '@/contexts/TabContext';
-import { api } from '@/lib/api';
+import { apiClient } from '@/lib/api';
 
-// API client using the centralized apiClient
-const apiClient = {
-  getAdminStatus: async () => {
-    return await api.getAdminStatus();
-  },
-  
-  getUsers: async () => {
-    return await api.getUsers();
-  },
-  
-  getTrainingList: async (params = {}) => {
-    return await api.getTrainingList(params);
-  },
-  
-  getAllFeedback: async (params = {}) => {
-    return await api.getAllFeedback(params);
-  },
-  
-  getAllSuggestions: async () => {
-    return await api.getAllSuggestions();
-  },
-  
-  getAnalyticsOverview: async () => {
-    return await api.getAnalyticsOverview();
-  },
-};
 
 const styles = {
   page: {

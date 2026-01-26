@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings } from 'lucide-react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -23,6 +23,7 @@ const navItems = [
   { name: 'DASHBOARD', href: '/dashboard', icon: LayoutDashboard },
   { name: 'AFL GENERATOR', href: '/afl-generator', icon: Code2 },
   { name: 'CHAT', href: '/chat', icon: MessageCircle },
+  { name: 'RESEARCHER', href: '/researcher', icon: TrendingUp },
   { name: 'TRAINING', href: '/training', icon: BookOpen },
   { name: 'KNOWLEDGE BASE', href: '/knowledge-base', icon: Database },
   { name: 'BACKTEST', href: '/backtest', icon: TrendingUp },
@@ -40,7 +41,7 @@ export function MainLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);

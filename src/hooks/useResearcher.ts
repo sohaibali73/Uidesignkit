@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import { researcherApi } from '../services/researcher';
+import { useState, useCallback } from 'react';
+import { apiClient } from '../lib/api';
 import { 
   CompanyResearch, 
   StrategyAnalysis, 
@@ -39,7 +39,7 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.getCompanyResearch(symbol);
+      const data = await apiClient.getCompanyResearch(symbol) as CompanyResearch;
       setCompanyData(data);
       setState(prev => ({ ...prev, researchData: data, currentSymbol: symbol }));
       return data;
@@ -56,7 +56,7 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.getCompanyNews(symbol, limit);
+      const data = await apiClient.getCompanyNews(symbol, limit) as { news: NewsItem[] };
       setNewsData(data.news);
       return data;
     } catch (error) {
@@ -72,7 +72,7 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.analyzeStrategyFit(symbol, strategyType, timeframe);
+      const data = await apiClient.analyzeStrategyFit(symbol, strategyType, timeframe) as StrategyAnalysis;
       setStrategyAnalysis(data);
       return data;
     } catch (error) {
@@ -88,7 +88,7 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.getPeerComparison(symbol, peers);
+      const data = await apiClient.getPeerComparison(symbol, peers) as PeerComparison;
       setPeerComparison(data);
       return data;
     } catch (error) {
@@ -104,7 +104,7 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.getMacroContext();
+      const data = await apiClient.getMacroContext();
       setMacroContext(data);
       return data;
     } catch (error) {
@@ -125,7 +125,7 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const report = await researcherApi.generateReport(symbol, reportType, sections, format);
+      const report = await apiClient.generateReport(symbol, reportType, sections, format) as ResearchReport;
       setReports(prev => [...prev, report]);
       return report;
     } catch (error) {
@@ -137,26 +137,11 @@ export const useResearcher = () => {
     }
   }, []);
 
-  const exportReport = useCallback(async (reportId: string, format: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const exportData = await researcherApi.exportReport(reportId, format);
-      return exportData;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to export report';
-      setError(errorMessage);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const searchResearch = useCallback(async (query: string, searchType: string, limit: number = 10) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.searchResearch(query, searchType, limit);
+      const data = await apiClient.searchResearch(query, searchType, limit);
       return data;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to search research';
@@ -171,7 +156,7 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.getTrendingResearch(limit);
+      const data = await apiClient.getTrendingResearch(limit);
       return data;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to get trending research';
@@ -186,10 +171,40 @@ export const useResearcher = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await researcherApi.getHealth();
+      const data = await apiClient.getResearcherHealth();
       return data;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to get health status';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getSECFilings = useCallback(async (symbol: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiClient.getSECFilings(symbol);
+      return data;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get SEC filings';
+      setError(errorMessage);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const exportReport = useCallback(async (reportId: string, format: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const exportData = await apiClient.exportReport(reportId, format);
+      return exportData;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export report';
       setError(errorMessage);
       throw error;
     } finally {

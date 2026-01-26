@@ -2,6 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables for theming */
+:root {
+  --accent-color: #FEC00F;
+  --accent-text-color: #212121;
+  --background-color: #121212;
+  --card-bg: #1E1E1E;
+  --input-bg: #2A2A2A;
+  --border-color: #424242;
+  --text-color: #FFFFFF;
+  --text-muted: #9E9E9E;
+  --text-secondary: #757575;
+  --hover-bg: #2A2A2A;
+}
+
+/* Dark theme variables (default) */
+:root.dark {
+  --accent-color: #FEC00F;
+  --accent-text-color: #212121;
+  --background-color: #121212;
+  --card-bg: #1E1E1E;
+  --input-bg: #2A2A2A;
+  --border-color: #424242;
+  --text-color: #FFFFFF;
+  --text-muted: #9E9E9E;
+  --text-secondary: #757575;
+  --hover-bg: #2A2A2A;
+}
+
+/* Light theme variables */
+:root:not(.dark) {
+  --accent-color: #FEC00F;
+  --accent-text-color: #212121;
+  --background-color: #ffffff;
+  --card-bg: #f5f5f5;
+  --input-bg: #ffffff;
+  --border-color: #e0e0e0;
+  --text-color: #212121;
+  --text-muted: #757575;
+  --text-secondary: #9E9E9E;
+  --hover-bg: #e8e8e8;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -11,19 +53,17 @@
 html, body, #root {
   height: 100%;
   width: 100%;
-  /* iOS Safari fix */
   height: 100dvh;
-  height: 100vh;
 }
 
 body {
-  background-color: #121212;
-  color: #FFFFFF;
+  background-color: var(--background-color);
+  color: var(--text-color);
   font-family: 'Quicksand', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* iOS Safari prevents zoom on input focus */
   font-size: 16px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* iOS Safari input fixes */
@@ -34,6 +74,9 @@ textarea,
 select {
   font-size: 16px !important;
   border-radius: 10px;
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 /* Remove default iOS styling */
@@ -59,16 +102,16 @@ input[type="password"] {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1E1E1E;
+  background: var(--card-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #424242;
+  background: var(--border-color);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #757575;
+  background: var(--text-secondary);
 }
 
 /* Prevent iOS double-tap zoom delay */
@@ -81,7 +124,6 @@ button, a, input[type="button"], input[type="submit"] {
 
 /* Prevent text selection on long press */
 * {
-  -webkit-user-select: text;
   -webkit-user-select: none;
 }
 
@@ -89,8 +131,63 @@ input, textarea, select {
   -webkit-user-select: text;
 }
 
-/* Fix keyboard appearing on focus */
-input, textarea, select {
-  font-size: 16px;
+/* Accent color utilities */
+.accent-bg {
+  background-color: var(--accent-color);
+}
+
+.accent-text {
+  color: var(--accent-color);
+}
+
+.accent-border {
+  border-color: var(--accent-color);
+}
+
+.accent-hover:hover {
+  background-color: var(--accent-color);
+}
+
+/* Theme-aware text colors */
+.text-primary {
+  color: var(--text-color);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+/* Theme-aware background colors */
+.bg-card {
+  background-color: var(--card-bg);
+}
+
+.bg-input {
+  background-color: var(--input-bg);
+}
+
+/* Theme-aware borders */
+.border-theme {
+  border-color: var(--border-color);
+}
+
+.hover-theme:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Fix for React Router DOM v6.4+ */
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure proper layout for main content */
+main {
+  flex: 1;
+  min-height: 100vh;
 }
 

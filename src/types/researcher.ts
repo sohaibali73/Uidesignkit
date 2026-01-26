@@ -27,7 +27,7 @@ export interface CompanyResearch {
     recent_sells: number;
     net_insider_position: number;
   };
-  sec_filings: SEC Filing[];
+  sec_filings: SECFiling[];
   news: NewsItem[];
   ai_summary: string;
 }
@@ -44,7 +44,7 @@ export interface NewsItem {
   url: string;
 }
 
-export interface SEC Filing {
+export interface SECFiling {
   type: string;
   date: string;
   summary: string;
@@ -107,7 +107,7 @@ export interface ResearcherState {
   currentSymbol: string | null;
   reportType: 'company' | 'strategy' | 'comparison';
   comparisonSymbols: string[];
-  researchData: any;
+  researchData: CompanyResearch | null;
   loading: boolean;
   error: string | null;
 }

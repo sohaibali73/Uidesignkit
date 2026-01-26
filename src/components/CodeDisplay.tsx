@@ -1,4 +1,3 @@
-// src/components/CodeDisplay.tsx
 import React, { useState } from 'react';
 import { Copy, Check, Download, Maximize2, Minimize2 } from 'lucide-react';
 
@@ -40,9 +39,6 @@ export function CodeDisplay({ code, language = 'afl', title = 'AFL CODE OUTPUT',
     const functions = ['MA', 'EMA', 'RSI', 'MACD', 'Cross', 'Ref', 'HHV', 'LLV', 'ATR', 'StDev', 'IIf', 'ValueWhen', 'BarsSince'];
     const variables = ['Close', 'Open', 'High', 'Low', 'Volume', 'O', 'H', 'L', 'C', 'V'];
 
-    let result = line;
-    
-    // This is a simplified highlighter - in production you'd use a proper syntax highlighter
     return (
       <span>
         {line.split(/(\s+|[(),;=<>!&|+\-*/])/).map((part, i) => {

@@ -2,10 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TabProvider } from './contexts/TabContext';
-import { ProtectedRoute } from './components/ProtectedRoute';  // Named import
-import { MainLayout } from './layouts/MainLayout';              // Named import
-
-// Page imports - all named imports except ReverseEngineerPage
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { MainLayout } from './layouts/MainLayout';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -13,14 +11,13 @@ import { AFLGeneratorPage } from './pages/AFLGeneratorPage';
 import { ChatPage } from './pages/ChatPage';
 import { KnowledgeBasePage } from './pages/KnowledgeBasePage';
 import { BacktestPage } from './pages/BacktestPage';
-import { ReverseEngineerPage } from './pages/ReverseEngineerPage';  // Named import
+import { ReverseEngineerPage } from './pages/ReverseEngineerPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AdminPage } from './pages/AdminPage';
-
-// Add this route inside the protected routes:
-
-
-
+import Researcher from './pages/Researcher';
+import { CompanyResearch } from './pages/CompanyResearch';
+import { StrategyAnalysis } from './pages/StrategyAnalysis';
+import { PeerComparison } from './pages/PeerComparison';
 
 function App() {
   return (
@@ -54,6 +51,10 @@ function App() {
               <Route path="backtest" element={<BacktestPage />} />
               <Route path="reverse-engineer" element={<ReverseEngineerPage />} />
               <Route path="admin" element={<AdminPage />} />
+              <Route path="researcher" element={<Researcher />} />
+              <Route path="researcher/company/:symbol" element={<CompanyResearch />} />
+              <Route path="researcher/strategy" element={<StrategyAnalysis />} />
+              <Route path="researcher/compare" element={<PeerComparison />} />
             </Route>
             
             <Route path="*" element={<Navigate to="/" replace />} />

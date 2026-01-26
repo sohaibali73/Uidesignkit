@@ -16,7 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { api } from '@/lib/api';
+import { apiClient } from '@/lib/api';
 
 export function DashboardPage() {
   const navigate = useNavigate();
@@ -53,8 +53,8 @@ export function DashboardPage() {
       
       // Fetch user stats and recent activity
       const [userStats, recentActions] = await Promise.all([
-        api.getUserStats(),
-        api.getRecentActivity(),
+        apiClient.getCurrentUser(),
+        apiClient.getAFLCodes(),
       ]);
       
       setDashboardData(userStats);

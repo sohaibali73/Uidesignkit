@@ -54,7 +54,7 @@ const sections = [
 
 export function SettingsPage() {
   const navigate = useNavigate();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme, accentColor, setAccentColor } = useTheme();
   const [activeSection, setActiveSection] = useState('profile');
   const [saved, setSaved] = useState(false);
   const [showClaudeKey, setShowClaudeKey] = useState(false);
@@ -179,6 +179,11 @@ export function SettingsPage() {
       ...prev,
       appearance: { ...prev.appearance, [field]: value },
     }));
+    
+    // Apply accent color immediately if it's being changed
+    if (field === 'accentColor') {
+      setAccentColor(value);
+    }
   };
 
   const updateNotifications = (field: string, value: boolean) => {
