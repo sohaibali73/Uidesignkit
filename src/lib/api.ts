@@ -193,6 +193,36 @@ class APIClient {
     return this.request<{ success: boolean }>(`/afl/codes/${codeId}`, 'DELETE');
   }
 
+  // File upload methods for AFL
+  async uploadAflFile(formData: FormData) {
+    const response = await fetch(`${API_BASE_URL}/afl/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.getToken()}`,
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Upload failed' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+    
+    return response.json();
+  }
+
+  async getAflFiles() {
+    return this.request<any[]>('/afl/files');
+  }
+
+  async getAflFileDetails(fileId: string) {
+    return this.request<any>(`/afl/files/${fileId}`);
+  }
+
+  async deleteAflFile(fileId: string) {
+    return this.request<{ success: boolean }>(`/afl/files/${fileId}`, 'DELETE');
+  }
+
   // ==================== CHAT ENDPOINTS ====================
 
   async getConversations() {
