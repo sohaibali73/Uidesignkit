@@ -48,19 +48,22 @@ import {
   KnowledgeCategory,
   TrainingTypeInfo,
 } from '@/types/api';
-import { MacroContext, SECFiling, ResearchSearchResult, ReportExport, ResearcherHealth } from '@/types/researcher';
+//import { MacroContext, SECFiling, ResearchSearchResult, ReportExport, ResearcherHealth } from '@/types/researcher';
 
 const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'https://potomac-analyst-workbench-production.up.railway.app';
 
-class APIClient {
-  private token: string | null = null;
 
+
+class APIClient {
   constructor() {
-    this.token = localStorage.getItem('auth_token');
+    // Token is managed through localStorage directly
   }
 
+  async uploadFile(conversationId: string, formData: FormData) {
+ return this.request(`/chat/conversations/${conversationId}/upload`, 'POST', formData, true);
+}
+
   private setToken(token: string) {
-    this.token = token;
     localStorage.setItem('auth_token', token);
   }
 
@@ -72,7 +75,8 @@ class APIClient {
     endpoint: string,
     method: string = 'GET',
     body?: any,
-    isFormData: boolean = false
+    isFormData: boolean = false,
+    timeoutMs: number = 30000
   ): Promise<T> {
     const headers: HeadersInit = {};
     const token = this.getToken();
@@ -85,9 +89,13 @@ class APIClient {
       headers['Content-Type'] = 'application/json';
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     const config: RequestInit = {
       method,
       headers,
+      signal: controller.signal,
     };
 
     if (body) {
@@ -98,14 +106,23 @@ class APIClient {
       }
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    try {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(error.detail || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${timeoutMs}ms`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return response.json();
   }
 
   // ==================== AUTH ENDPOINTS ====================
@@ -136,7 +153,6 @@ class APIClient {
   }
 
   logout() {
-    this.token = null;
     localStorage.removeItem('auth_token');
   }
 
@@ -195,11 +211,85 @@ class APIClient {
     return this.request<{ success: boolean }>(`/chat/conversations/${conversationId}`, 'DELETE');
   }
 
-  async sendMessage(content: string, conversationId?: string) {
-    return this.request<{ conversation_id: string; response: string; tools_used?: any[] }>('/chat/message', 'POST', {
-      content,
-      conversation_id: conversationId,
+  async sendMessage(content: string, conversationId?: string, onChunk?: (chunk: string) => void) {
+    const token = this.getToken();
+    const headers: HeadersInit = {};
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    headers['Content-Type'] = 'application/json';
+
+    const response = await fetch(`${API_BASE_URL}/chat/message`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        content,
+        conversation_id: conversationId,
+      }),
     });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(error.detail || `HTTP ${response.status}`);
+    }
+
+    // Check if response is streaming
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('text/event-stream') || contentType?.includes('application/x-ndjson')) {
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+      let conversationId = '';
+      let toolsUsed: any[] = [];
+
+      if (reader) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  
+                  if (parsed.type === 'content') {
+                    fullResponse += parsed.content;
+                    if (onChunk) {
+                      onChunk(parsed.content);
+                    }
+                  } else if (parsed.type === 'metadata') {
+                    conversationId = parsed.conversation_id || conversationId;
+                    toolsUsed = parsed.tools_used || toolsUsed;
+                  }
+                } catch (e) {
+                  // Skip invalid JSON
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      }
+
+      return {
+        conversation_id: conversationId,
+        response: fullResponse,
+        tools_used: toolsUsed,
+      };
+    } else {
+      // Handle non-streaming response (fallback)
+      return response.json();
+    }
   }
 
   async getChatTools() {
@@ -273,14 +363,14 @@ class APIClient {
 
   // ==================== REVERSE ENGINEER ENDPOINTS ====================
 
-  async startReverseEngineering(query: string) {
-    return this.request<Strategy>('/reverse-engineer/start', 'POST', { query });
+  async startReverseEngineering(description: string) {
+    return this.request<Strategy>('/reverse-engineer/start', 'POST', { description });
   }
 
-  async continueReverseEngineering(strategyId: string, message: string) {
+  async continueReverseEngineering(strategyId: string, content: string) {
     return this.request<Strategy>('/reverse-engineer/continue', 'POST', {
       strategy_id: strategyId,
-      message,
+      content,
     });
   }
 
@@ -525,7 +615,7 @@ class APIClient {
   }
 
   // ==================== RESEARCHER ENDPOINTS ====================
-
+  /*
   async getCompanyResearch(symbol: string) {
     return this.request<CompanyResearch>(`/api/researcher/company/${symbol}`, 'GET');
   }
@@ -581,7 +671,7 @@ class APIClient {
   async getResearcherHealth() {
     return this.request<ResearcherHealth>('/api/researcher/health', 'GET');
   }
-
+  */
   // ==================== UTILITY ENDPOINTS ====================
 
   async checkHealth() {
