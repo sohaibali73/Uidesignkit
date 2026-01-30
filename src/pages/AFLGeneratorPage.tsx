@@ -1,9 +1,14 @@
-import React, { useState } from 'react';
-import { Sparkles, Copy, Check, Download, Bug, Lightbulb, Zap, Loader2, MessageSquare } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Sparkles, Copy, Check, Download, Bug, Lightbulb, Zap, Loader2, MessageSquare, Paperclip, Upload, X, FileText, Maximize2, Minimize2 } from 'lucide-react';
 import apiClient from '@/lib/api';
 import FeedbackModal from '@/components/FeedbackModal';
+import Editor from '@monaco-editor/react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export function AFLGeneratorPage() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === 'dark';
+  
   const [prompt, setPrompt] = useState('');
   const [strategyType, setStrategyType] = useState('standalone');
   const [loading, setLoading] = useState(false);
@@ -12,6 +17,29 @@ export function AFLGeneratorPage() {
   const [error, setError] = useState('');
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [codeId, setCodeId] = useState<string | undefined>(undefined);
+  
+  // Environment Settings state
+  const [showSettings, setShowSettings] = useState(false);
+  const [backtestSettings, setBacktestSettings] = useState({
+    initial_equity: 100000,
+    position_size: "100",
+    position_size_type: "spsPercentOfEquity",
+    max_positions: 10,
+    commission: 0.001,
+    trade_delays: [0, 0, 0, 0] as [number, number, number, number],
+    margin_requirement: 100,
+  });
+  
+  // File upload state
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Code editor state
+  const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const editorRef = useRef<any>(null);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -25,9 +53,18 @@ export function AFLGeneratorPage() {
       const result = await apiClient.generateAFL({
         request: prompt,
         strategy_type: strategyType as any,
+        backtest_settings: backtestSettings,
+        uploaded_file_ids: selectedFileIds,
       });
       setGeneratedCode(result.afl_code || result.code || '// Generated code will appear here');
       setCodeId(result.id);
+      
+      // Auto-format after generation
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.getAction('editor.action.formatDocument')?.run();
+        }
+      }, 100);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate code');
     } finally {
@@ -46,9 +83,141 @@ export function AFLGeneratorPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'strategy.afl';
+    a.download = `strategy_${Date.now()}.afl`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(generatedCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleFormatCode = () => {
+    if (editorRef.current) {
+      editorRef.current.getAction('editor.action.formatDocument')?.run();
+    }
+  };
+
+  const handleToggleFullscreen = () => {
+    setIsEditorFullscreen(!isEditorFullscreen);
+  };
+
+  function handleEditorDidMount(editor: any, monaco: any) {
+    editorRef.current = editor;
+    
+    monaco.languages.register({ id: 'afl' });
+    
+    monaco.languages.setMonarchTokensProvider('afl', {
+      keywords: [
+        'Buy', 'Sell', 'Short', 'Cover', 'Filter', 
+        'if', 'else', 'for', 'while', 'function',
+        'SetOption', 'SetTradeDelays', 'SetPositionSize',
+        'Param', 'Optimize', 'Plot', 'PlotShapes',
+        'ExRem', 'Flip', 'Cross', 'TimeFrameSet', 'TimeFrameRestore',
+      ],
+      
+      builtinFunctions: [
+        'MA', 'EMA', 'SMA', 'WMA', 'DEMA', 'TEMA',
+        'RSI', 'MACD', 'ATR', 'ADX', 'CCI', 'MFI',
+        'BBandTop', 'BBandBot', 'SAR', 'ROC',
+        'HHV', 'LLV', 'Ref', 'Sum', 'Cum',
+      ],
+      
+      tokenizer: {
+        root: [
+          [/[a-zA-Z_]\w*/, {
+            cases: {
+              '@keywords': 'keyword',
+              '@builtinFunctions': 'type.identifier',
+              '@default': 'identifier'
+            }
+          }],
+          [/".*?"/, 'string'],
+          [/\/\/.*$/, 'comment'],
+          [/\/\*/, 'comment', '@comment'],
+          [/\d+/, 'number'],
+        ],
+        comment: [
+          [/\*\//, 'comment', '@pop'],
+          [/./, 'comment']
+        ],
+      },
+    });
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File too large. Maximum size is 10MB');
+      return;
+    }
+    
+    const allowedTypes = [
+      'text/csv',
+      'text/plain',
+      'application/pdf',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ];
+    
+    const isAllowed = allowedTypes.includes(file.type) || 
+                      file.name.endsWith('.afl') || 
+                      file.name.endsWith('.csv');
+    
+    if (!isAllowed) {
+      alert('Unsupported file type. Please upload CSV, TXT, PDF, or AFL files.');
+      return;
+    }
+    
+    setUploadingFile(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const result = await apiClient.uploadAflFile(formData);
+      
+      setUploadedFiles(prev => [result, ...prev]);
+      setSelectedFileIds(prev => [...prev, result.file_id]);
+      
+      alert(` File uploaded: ${result.filename}`);
+      
+    } catch (err: any) {
+      console.error('Upload failed:', err);
+      alert(`L Upload failed: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    if (!confirm('Delete this file?')) return;
+    
+    try {
+      await apiClient.deleteAflFile(fileId);
+      setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+      setSelectedFileIds(prev => prev.filter(id => id !== fileId));
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Failed to delete file');
+    }
+  };
+
+  const toggleFileSelection = (fileId: string) => {
+    setSelectedFileIds(prev => 
+      prev.includes(fileId)
+        ? prev.filter(id => id !== fileId)
+        : [...prev, fileId]
+    );
   };
 
   return (

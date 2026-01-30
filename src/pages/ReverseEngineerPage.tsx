@@ -12,10 +12,14 @@ import {
   Zap,
   Send,
   Clock,
+  Download,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import apiClient from '@/lib/api';
 import yellowLogo from '@/assets/yellowlogo.png';
+import Editor from '@monaco-editor/react';
 
 interface ChatMessage {
   id: string;
@@ -39,6 +43,11 @@ export function ReverseEngineerPage() {
   const [generatedCode, setGeneratedCode] = useState('');
   const [strategyId, setStrategyId] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Code editor state
+  const [isEditorFullscreen, setIsEditorFullscreen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const editorRef = useRef<any>(null);
 
   // Theme-aware colors
   const colors = {
@@ -247,6 +256,78 @@ PositionSize = 100;`);
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(generatedCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleDownloadCode = () => {
+    const blob = new Blob([generatedCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `strategy_${Date.now()}.afl`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFormatCode = () => {
+    if (editorRef.current) {
+      editorRef.current.getAction('editor.action.formatDocument')?.run();
+    }
+  };
+
+  const handleToggleFullscreen = () => {
+    setIsEditorFullscreen(!isEditorFullscreen);
+  };
+
+  function handleEditorDidMount(editor: any, monaco: any) {
+    editorRef.current = editor;
+    
+    // Configure AFL-like syntax highlighting
+    monaco.languages.register({ id: 'afl' });
+    
+    monaco.languages.setMonarchTokensProvider('afl', {
+      keywords: [
+        'Buy', 'Sell', 'Short', 'Cover', 'Filter', 
+        'if', 'else', 'for', 'while', 'function',
+        'SetOption', 'SetTradeDelays', 'SetPositionSize',
+        'Param', 'Optimize', 'Plot', 'PlotShapes',
+        'ExRem', 'Flip', 'Cross', 'TimeFrameSet', 'TimeFrameRestore',
+      ],
+      
+      builtinFunctions: [
+        'MA', 'EMA', 'SMA', 'WMA', 'DEMA', 'TEMA',
+        'RSI', 'MACD', 'ATR', 'ADX', 'CCI', 'MFI',
+        'BBandTop', 'BBandBot', 'SAR', 'ROC',
+        'HHV', 'LLV', 'Ref', 'Sum', 'Cum',
+      ],
+      
+      tokenizer: {
+        root: [
+          [/[a-zA-Z_]\w*/, {
+            cases: {
+              '@keywords': 'keyword',
+              '@builtinFunctions': 'type.identifier',
+              '@default': 'identifier'
+            }
+          }],
+          [/".*?"/, 'string'],
+          [/\/\/.*$/, 'comment'],
+          [/\/\*/, 'comment', '@comment'],
+          [/\d+/, 'number'],
+        ],
+        comment: [
+          [/\*\//, 'comment', '@pop'],
+          [/./, 'comment']
+        ],
+      },
+    });
+  }
 
   const handleReset = () => {
     setDescription('');
@@ -675,21 +756,36 @@ PositionSize = 100;`);
 
           <div style={{
             flex: 1,
-            padding: '20px',
             backgroundColor: colors.codeBg,
             overflow: 'auto',
           }}>
-            {activeStep >= 3 ? (
-              <pre style={{
-                margin: 0,
-                fontFamily: activeStep >= 4 ? "'Fira Code', monospace" : "'Quicksand', sans-serif",
-                fontSize: '13px',
-                lineHeight: 1.7,
-                color: colors.text,
-                whiteSpace: 'pre-wrap',
-              }}>
-                {generatedCode || schematic}
-              </pre>
+            {activeStep >= 4 ? (
+              // Show schematic as text
+              <div style={{ padding: '20px' }}>
+                <pre style={{
+                  margin: 0,
+                  fontFamily: "'Quicksand', sans-serif",
+                  fontSize: '13px',
+                  lineHeight: 1.7,
+                  color: colors.text,
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  {schematic}
+                </pre>
+              </div>
+            ) : activeStep >= 3 ? (
+              <div style={{ padding: '20px' }}>
+                <pre style={{
+                  margin: 0,
+                  fontFamily: "'Quicksand', sans-serif",
+                  fontSize: '13px',
+                  lineHeight: 1.7,
+                  color: colors.text,
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  {schematic}
+                </pre>
+              </div>
             ) : (
               <div style={{
                 height: '100%',
@@ -698,6 +794,7 @@ PositionSize = 100;`);
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: colors.textMuted,
+                padding: '20px',
               }}>
                 <Zap size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />
                 <p style={{ fontSize: '14px', margin: 0, textAlign: 'center' }}>
@@ -710,6 +807,264 @@ PositionSize = 100;`);
           </div>
         </div>
       </div>
+
+      {/* Code Editor Section - Fullscreen Overlay */}
+      {activeStep >= 4 && generatedCode && (
+        <div style={{
+          position: isEditorFullscreen ? 'fixed' : 'relative',
+          top: isEditorFullscreen ? 0 : 'auto',
+          left: isEditorFullscreen ? 0 : 'auto',
+          right: isEditorFullscreen ? 0 : 'auto',
+          bottom: isEditorFullscreen ? 0 : 'auto',
+          zIndex: isEditorFullscreen ? 9999 : 'auto',
+          marginTop: isEditorFullscreen ? 0 : '24px',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: colors.cardBg,
+          border: `1px solid ${colors.border}`,
+          borderRadius: isEditorFullscreen ? 0 : '12px',
+          overflow: 'hidden',
+          height: isEditorFullscreen ? '100vh' : '400px',
+        }}>
+          {/* Editor Header */}
+          <div style={{
+            padding: '12px 16px',
+            backgroundColor: isDark ? '#252540' : '#e8e8e8',
+            borderBottom: `1px solid ${colors.border}`,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            {/* Left: Title */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}>
+              <span style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: colors.text,
+              }}>
+                =» Generated AFL Code
+              </span>
+              {generatedCode && (
+                <span style={{
+                  fontSize: '11px',
+                  color: colors.textMuted,
+                  backgroundColor: colors.inputBg,
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                }}>
+                  {generatedCode.split('\n').length} lines
+                </span>
+              )}
+            </div>
+
+            {/* Right: Actions */}
+            <div style={{
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'center',
+            }}>
+              {/* Format Button */}
+              <button
+                onClick={handleFormatCode}
+                disabled={!generatedCode}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: 'transparent',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '6px',
+                  color: colors.text,
+                  fontSize: '12px',
+                  cursor: generatedCode ? 'pointer' : 'not-allowed',
+                  opacity: generatedCode ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (generatedCode) {
+                    e.currentTarget.style.backgroundColor = colors.inputBg;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                ( Format
+              </button>
+
+              {/* Copy Button */}
+              <button
+                onClick={handleCopyCode}
+                disabled={!generatedCode}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: copiedCode ? '#22C55E' : 'transparent',
+                  border: `1px solid ${copiedCode ? '#22C55E' : colors.border}`,
+                  borderRadius: '6px',
+                  color: copiedCode ? '#fff' : colors.text,
+                  fontSize: '12px',
+                  cursor: generatedCode ? 'pointer' : 'not-allowed',
+                  opacity: generatedCode ? 1 : 0.5,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {copiedCode ? (
+                  <>
+                    <Check size={14} />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} />
+                    Copy
+                  </>
+                )}
+              </button>
+
+              {/* Download Button */}
+              <button
+                onClick={handleDownloadCode}
+                disabled={!generatedCode}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: generatedCode ? '#FEC00F' : colors.inputBg,
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: generatedCode ? '#212121' : colors.textMuted,
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: generatedCode ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (generatedCode) {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(254,192,15,0.4)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <Download size={14} />
+                Download
+              </button>
+
+              {/* Fullscreen Toggle */}
+              <button
+                onClick={handleToggleFullscreen}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: 'transparent',
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '6px',
+                  color: colors.text,
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = colors.inputBg;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                {isEditorFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Monaco Editor */}
+          <div style={{
+            flex: 1,
+            overflow: 'hidden',
+            position: 'relative',
+          }}>
+            <Editor
+              height="100%"
+              defaultLanguage="c"
+              language="afl"
+              theme={isDark ? 'vs-dark' : 'vs-light'}
+              value={generatedCode}
+              onChange={(value) => setGeneratedCode(value || '')}
+              onMount={handleEditorDidMount}
+              options={{
+                minimap: { enabled: true },
+                fontSize: 13,
+                fontFamily: "'Fira Code', 'Monaco', 'Courier New', monospace",
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                tabSize: 4,
+                insertSpaces: true,
+                wordWrap: 'on',
+                folding: true,
+                lineDecorationsWidth: 10,
+                lineNumbersMinChars: 4,
+                renderLineHighlight: 'all',
+                scrollbar: {
+                  verticalScrollbarSize: 10,
+                  horizontalScrollbarSize: 10,
+                },
+                contextmenu: true,
+                quickSuggestions: true,
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnEnter: 'on',
+                formatOnPaste: true,
+                formatOnType: true,
+                rulers: [80, 120],
+                bracketPairColorization: {
+                  enabled: true,
+                },
+              }}
+            />
+          </div>
+
+          {/* Editor Footer */}
+          {generatedCode && (
+            <div style={{
+              padding: '8px 16px',
+              backgroundColor: isDark ? '#1a1a2e' : '#f5f5f5',
+              borderTop: `1px solid ${colors.border}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '11px',
+              color: colors.textMuted,
+            }}>
+              <div style={{ display: 'flex', gap: '16px' }}>
+                <span>Lines: {generatedCode.split('\n').length}</span>
+                <span>Characters: {generatedCode.length}</span>
+                <span>Language: AFL</span>
+              </div>
+              <div>
+                {editorRef.current?.getPosition && editorRef.current.getPosition() && (
+                  <span>
+                    Ln {editorRef.current.getPosition().lineNumber}, 
+                    Col {editorRef.current.getPosition().column}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <style>{`
         @keyframes spin {
