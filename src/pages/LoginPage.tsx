@@ -321,8 +321,8 @@ export function LoginPage() {
                 }}>
                   PASSWORD
                 </label>
-                <button
-                  type="button"
+                <Link
+                  to="/forgot-password"
                   style={{
                     background: 'none',
                     border: 'none',
@@ -331,10 +331,11 @@ export function LoginPage() {
                     fontWeight: 600,
                     cursor: 'pointer',
                     fontFamily: "'Quicksand', sans-serif",
+                    textDecoration: 'none',
                   }}
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div style={{ position: 'relative' }}>
                 <input

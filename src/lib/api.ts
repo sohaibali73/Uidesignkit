@@ -199,8 +199,11 @@ class APIClient {
     return this.request<Conversation[]>('/chat/conversations');
   }
 
-  async createConversation() {
-    return this.request<Conversation>('/chat/conversations', 'POST', {});
+  async createConversation(title: string = "New Conversation") {
+    return this.request<Conversation>('/chat/conversations', 'POST', {
+      title,
+      conversation_type: "agent"
+    });
   }
 
   async getMessages(conversationId: string) {
@@ -211,89 +214,27 @@ class APIClient {
     return this.request<{ success: boolean }>(`/chat/conversations/${conversationId}`, 'DELETE');
   }
 
-  async sendMessage(content: string, conversationId?: string, onChunk?: (chunk: string) => void) {
-    const token = this.getToken();
-    const headers: HeadersInit = {};
-    
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    headers['Content-Type'] = 'application/json';
-
-    const response = await fetch(`${API_BASE_URL}/chat/message`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        content,
-        conversation_id: conversationId,
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
-    }
-
-    // Check if response is streaming
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('text/event-stream') || contentType?.includes('application/x-ndjson')) {
-      // Handle streaming response
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullResponse = '';
-      let conversationId = '';
-      let toolsUsed: any[] = [];
-
-      if (reader) {
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const data = line.slice(6);
-                if (data === '[DONE]') continue;
-
-                try {
-                  const parsed = JSON.parse(data);
-                  
-                  if (parsed.type === 'content') {
-                    fullResponse += parsed.content;
-                    if (onChunk) {
-                      onChunk(parsed.content);
-                    }
-                  } else if (parsed.type === 'metadata') {
-                    conversationId = parsed.conversation_id || conversationId;
-                    toolsUsed = parsed.tools_used || toolsUsed;
-                  }
-                } catch (e) {
-                  // Skip invalid JSON
-                }
-              }
-            }
-          }
-        } finally {
-          reader.releaseLock();
-        }
-      }
-
-      return {
-        conversation_id: conversationId,
-        response: fullResponse,
-        tools_used: toolsUsed,
-      };
-    } else {
-      // Handle non-streaming response (fallback)
-      return response.json();
-    }
+  async sendMessage(content: string, conversationId?: string): Promise<{
+    conversation_id: string;
+    response: string;
+    tools_used?: { tool: string; input: any }[];
+  }> {
+    return this.request<{
+      conversation_id: string;
+      response: string;
+      tools_used?: { tool: string; input: any }[];
+    }>('/chat/message', 'POST', {
+      content,
+      conversation_id: conversationId,
+    }, false, 120000); // 2 minute timeout for AI responses
   }
 
   async getChatTools() {
-    return this.request<{ name: string; description: string }[]>('/chat/tools');
+    const response = await this.request<{ 
+      tools: { name: string; description: string; type: string; parameters?: string[] }[]; 
+      count: number 
+    }>('/chat/tools');
+    return response.tools;
   }
 
   // ==================== BRAIN/KNOWLEDGE BASE ENDPOINTS ====================
