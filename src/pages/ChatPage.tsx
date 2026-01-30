@@ -1,22 +1,40 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Plus, MessageSquare, Paperclip, Copy, Check, Trash2, Clock, Sparkles } from 'lucide-react';
+import { Send, Plus, MessageSquare, Paperclip, Copy, Check, Trash2, Clock, X} from 'lucide-react';
 import apiClient from '@/lib/api';
 import { Conversation, Message } from '@/types/api';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { ArtifactRenderer } from '@/components/ArtifactRenderer';
+
+// Import logo properly from assets
 import yellowLogo from '@/assets/yellowlogo.png';
 
+// Extended Message type with artifacts
+interface MessageWithArtifacts extends Message {
+  text?: string;
+  artifacts?: Array<{
+    type: string;
+    code: string;
+    language: string;
+    id: string;
+  }>;
+  has_artifacts?: boolean;
+}
+
 export function ChatPage() {
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme, accentColor } = useTheme();
+  const { user } = useAuth();
   const isDark = resolvedTheme === 'dark';
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageWithArtifacts[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Theme-aware colors
   const colors = {
@@ -28,7 +46,7 @@ export function ChatPage() {
     text: isDark ? '#FFFFFF' : '#212121',
     textMuted: isDark ? '#9E9E9E' : '#757575',
     codeBg: isDark ? '#1a1a2e' : '#f5f5f5',
-    userBubble: '#FEC00F',
+    userBubble: accentColor,
     assistantBubble: isDark ? '#2A2A2A' : '#f0f0f0',
   };
 
@@ -71,31 +89,79 @@ export function ChatPage() {
     if (!input.trim() || loading) return;
     
     const userMessage = input;
+    const tempId = `temp-${Date.now()}`;
     setInput('');
     setLoading(true);
 
-    const tempUserMsg: Message = {
-      id: 'temp-user',
-      conversation_id: selectedConversation?.id || '',
+    // Optimistic update for user message
+    const optimisticUserMsg: MessageWithArtifacts = {
+      id: tempId,
+      conversation_id: selectedConversation?.id || 'pending',
       role: 'user',
       content: userMessage,
       created_at: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, tempUserMsg]);
+    
+    setMessages(prev => [...prev, optimisticUserMsg]);
 
     try {
-      const response = await apiClient.sendMessage(userMessage, selectedConversation?.id);
-      setMessages(prev => [...prev.filter(m => m.id !== 'temp-user'), response]);
+      const apiResponse = await apiClient.sendMessage(userMessage, selectedConversation?.id);
+      
+      // Remove optimistic message and add real messages with artifacts
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== tempId);
+        return [
+          ...filtered,
+          {
+            id: `user-${apiResponse.conversation_id}-${Date.now()}`,
+            conversation_id: apiResponse.conversation_id,
+            role: 'user',
+            content: userMessage,
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: `assistant-${apiResponse.conversation_id}-${Date.now()}`,
+            conversation_id: apiResponse.conversation_id,
+            role: 'assistant',
+            content: apiResponse.response,
+            text: apiResponse.text || apiResponse.response,
+            artifacts: apiResponse.artifacts || [],
+            has_artifacts: apiResponse.has_artifacts || false,
+            created_at: new Date().toISOString(),
+          }
+        ];
+      });
+
+      // Update conversation state
+      if (!selectedConversation?.id) {
+        setSelectedConversation(prev => prev ? { ...prev, id: apiResponse.conversation_id } : null);
+        await loadConversations();
+      }
     } catch (err) {
       console.error('Failed to send message:', err);
-      // Add error message
-      setMessages(prev => [...prev.filter(m => m.id !== 'temp-user'), {
-        id: 'error',
-        conversation_id: selectedConversation?.id || '',
-        role: 'assistant',
-        content: 'Sorry, I encountered an error processing your request. Please try again.',
-        created_at: new Date().toISOString(),
-      }]);
+      
+      // Replace optimistic message with error state
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== tempId);
+        return [
+          ...filtered,
+          {
+            id: `user-${Date.now()}`,
+            conversation_id: selectedConversation?.id || '',
+            role: 'user',
+            content: userMessage,
+            created_at: new Date().toISOString(),
+          },
+          {
+            id: `error-${Date.now()}`,
+            conversation_id: selectedConversation?.id || '',
+            role: 'assistant',
+            content: '⚠️ Failed to send message. Please try again.',
+            created_at: new Date().toISOString(),
+            metadata: { error: true }
+          }
+        ];
+      });
     } finally {
       setLoading(false);
     }
@@ -112,252 +178,171 @@ export function ChatPage() {
     }
   };
 
-  const handleCopyCode = (code: string, id: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedId(id);
+  const handleDeleteConversation = async (conversationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!window.confirm('Are you sure you want to delete this conversation?')) return;
+    
+    try {
+      await apiClient.deleteConversation(conversationId);
+      setConversations(prev => prev.filter(c => c.id !== conversationId));
+      
+      if (selectedConversation?.id === conversationId) {
+        setSelectedConversation(null);
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error('Failed to delete conversation:', err);
+      alert('Failed to delete conversation. Please try again.');
+    }
+  };
+
+  const handleFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    
+    if (!selectedConversation?.id) {
+      alert('Please start a conversation first');
+      return;
+    }
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      await apiClient.uploadFile(selectedConversation.id, formData);
+      alert(`File "${file.name}" uploaded successfully!`);
+    } catch (err) {
+      console.error('Failed to upload file:', err);
+      alert('Failed to upload file. Please try again.');
+    }
+  };
+
+  const handleCopy = (text: string, messageId: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(messageId);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const renderMessageContent = (content: string | undefined | null, messageId: string, isUser: boolean) => {
-    // Guard against undefined/null content
-    if (!content) {
-      return <span>No content</span>;
-    }
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
     
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    let match;
-
-    while ((match = codeBlockRegex.exec(content)) !== null) {
-      if (match.index > lastIndex) {
-        const textContent = content.slice(lastIndex, match.index);
-        parts.push(
-          <span key={`text-${lastIndex}`} style={{ whiteSpace: 'pre-wrap' }}>
-            {renderFormattedText(textContent)}
-          </span>
-        );
-      }
-
-      const language = match[1] || 'code';
-      const code = match[2];
-      const codeId = `${messageId}-${match.index}`;
-      
-      parts.push(
-        <div
-          key={`code-${match.index}`}
-          style={{
-            backgroundColor: colors.codeBg,
-            borderRadius: '12px',
-            margin: '16px 0',
-            overflow: 'hidden',
-            border: `1px solid ${colors.border}`,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}
-        >
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 16px',
-            backgroundColor: isDark ? '#252540' : '#e8e8e8',
-            borderBottom: `1px solid ${colors.border}`,
-          }}>
-            <span style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#FEC00F',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-            }}>
-              {language}
-            </span>
-            <button
-              onClick={() => handleCopyCode(code, codeId)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                backgroundColor: copiedId === codeId ? '#22C55E' : 'transparent',
-                border: `1px solid ${copiedId === codeId ? '#22C55E' : colors.border}`,
-                borderRadius: '6px',
-                cursor: 'pointer',
-                color: copiedId === codeId ? '#fff' : colors.textMuted,
-                fontSize: '12px',
-                fontWeight: 500,
-                transition: 'all 0.2s ease',
-              }}
-            >
-              {copiedId === codeId ? <Check size={14} /> : <Copy size={14} />}
-              {copiedId === codeId ? 'Copied!' : 'Copy'}
-            </button>
-          </div>
-          <pre style={{
-            margin: 0,
-            padding: '16px',
-            fontFamily: "'Fira Code', 'Monaco', monospace",
-            fontSize: '13px',
-            color: isDark ? '#e0e0e0' : '#333',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            lineHeight: 1.6,
-            overflowX: 'auto',
-          }}>
-            {code}
-          </pre>
-        </div>
-      );
-
-      lastIndex = match.index + match[0].length;
-    }
-
-    if (lastIndex < content.length) {
-      parts.push(
-        <span key={`text-${lastIndex}`} style={{ whiteSpace: 'pre-wrap' }}>
-          {renderFormattedText(content.slice(lastIndex))}
-        </span>
-      );
-    }
-
-    return parts.length > 0 ? parts : renderFormattedText(content);
-  };
-
-  const renderFormattedText = (text: unknown) => {
-    // Guard against non-string values
-    if (!text || typeof text !== 'string') {
-      return <span>{String(text || '')}</span>;
-    }
-    let processedText = text;
-    // Bold text
-    processedText = processedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Italic text
-    processedText = processedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Inline code
-    processedText = processedText.replace(/`([^`]+)`/g, '<code style="background-color: rgba(254,192,15,0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em;">$1</code>');
-    // Line breaks
-    processedText = processedText.replace(/\n/g, '<br/>');
-    
-    return <span dangerouslySetInnerHTML={{ __html: processedText }} />;
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+    return date.toLocaleDateString();
   };
 
   return (
     <div style={{
+      display: 'flex',
       height: '100vh',
       backgroundColor: colors.background,
-      display: 'flex',
       fontFamily: "'Quicksand', sans-serif",
-      transition: 'background-color 0.3s ease',
+      overflow: 'hidden',
     }}>
-      {/* Conversations Sidebar */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+        accept=".txt,.pdf,.csv,.json,.afl,.c"
+      />
+
+      {/* Sidebar */}
       <div style={{
         width: '300px',
         backgroundColor: colors.sidebar,
         borderRight: `1px solid ${colors.border}`,
         display: 'flex',
         flexDirection: 'column',
-        transition: 'background-color 0.3s ease',
+        transition: 'all 0.3s ease',
       }}>
+        {/* Header */}
         <div style={{
           padding: '20px',
           borderBottom: `1px solid ${colors.border}`,
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '16px',
-          }}>
-            <h2 style={{
-              fontFamily: "'Rajdhani', sans-serif",
-              fontSize: '16px',
-              fontWeight: 600,
-              color: colors.text,
-              letterSpacing: '1px',
-              margin: 0,
-            }}>
-              CONVERSATIONS
-            </h2>
-            <button
-              onClick={handleNewConversation}
-              style={{
-                width: '36px',
-                height: '36px',
-                backgroundColor: '#FEC00F',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 8px rgba(254,192,15,0.3)',
-                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(254,192,15,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(254,192,15,0.3)';
-              }}
-            >
-              <Plus size={18} color="#212121" />
-            </button>
-          </div>
-        </div>
-
-        <div style={{ flex: 1, overflow: 'auto', padding: '12px' }}>
-          {loadingConversations ? (
-            <div style={{
+          <button
+            onClick={handleNewConversation}
+            style={{
+              width: '100%',
+              padding: '14px',
+              backgroundColor: '#FEC00F',
+              border: 'none',
+              borderRadius: '12px',
+              color: '#212121',
+              fontWeight: '600',
+              fontSize: '14px',
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '40px 0',
-            }}>
-              <div className="spinner" style={{
-                width: '28px',
-                height: '28px',
-                border: `3px solid ${colors.border}`,
-                borderTopColor: '#FEC00F',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-              }} />
+              gap: '8px',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(254,192,15,0.3)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#f5b800';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(254,192,15,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#FEC00F';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(254,192,15,0.3)';
+            }}
+          >
+            <Plus size={18} />
+            New Chat
+          </button>
+        </div>
+
+        {/* Conversations List */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '12px',
+        }}>
+          {loadingConversations ? (
+            <div style={{ padding: '20px', textAlign: 'center', color: colors.textMuted }}>
+              Loading...
             </div>
           ) : conversations.length === 0 ? (
             <div style={{
+              padding: '20px',
               textAlign: 'center',
-              padding: '40px 20px',
+              color: colors.textMuted,
+              fontSize: '14px',
             }}>
-              <MessageSquare size={40} color={colors.textMuted} style={{ marginBottom: '12px', opacity: 0.5 }} />
-              <p style={{ color: colors.textMuted, fontSize: '13px', margin: 0 }}>
-                No conversations yet.<br />Start a new one!
-              </p>
+              No conversations yet
             </div>
           ) : (
             conversations.map((conv) => (
-              <button
+              <div
                 key={conv.id}
                 onClick={() => setSelectedConversation(conv)}
                 style={{
-                  width: '100%',
-                  padding: '14px 16px',
+                  padding: '14px',
                   marginBottom: '8px',
-                  backgroundColor: selectedConversation?.id === conv.id 
-                    ? (isDark ? 'rgba(254,192,15,0.15)' : 'rgba(254,192,15,0.2)')
-                    : 'transparent',
-                  border: selectedConversation?.id === conv.id 
-                    ? '1px solid #FEC00F' 
-                    : `1px solid transparent`,
+                  backgroundColor: selectedConversation?.id === conv.id ? colors.inputBg : 'transparent',
+                  border: `1px solid ${selectedConversation?.id === conv.id ? colors.border : 'transparent'}`,
                   borderRadius: '12px',
                   cursor: 'pointer',
-                  textAlign: 'left',
                   transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
                 }}
                 onMouseEnter={(e) => {
                   if (selectedConversation?.id !== conv.id) {
@@ -370,29 +355,66 @@ export function ChatPage() {
                   }
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <MessageSquare size={16} color={selectedConversation?.id === conv.id ? '#FEC00F' : colors.textMuted} />
-                  <span style={{
-                    fontFamily: "'Rajdhani', sans-serif",
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: selectedConversation?.id === conv.id ? '#FEC00F' : colors.text,
-                    display: 'block',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1,
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '4px',
                   }}>
-                    {conv.title || 'New Conversation'}
-                  </span>
+                    <MessageSquare size={14} color="#FEC00F" />
+                    <span style={{
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      color: colors.text,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {conv.title || 'New Conversation'}
+                    </span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '12px',
+                    color: colors.textMuted,
+                  }}>
+                    <Clock size={12} />
+                    {formatTime(conv.updated_at)}
+                  </div>
                 </div>
-              </button>
+                <button
+                  onClick={(e) => handleDeleteConversation(conv.id, e)}
+                  style={{
+                    padding: '6px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#ff5252';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <Trash2 size={14} color={colors.textMuted} />
+                </button>
+              </div>
             ))
           )}
         </div>
       </div>
 
-      {/* Chat Area */}
+      {/* Main Chat Area */}
       <div style={{
         flex: 1,
         display: 'flex',
@@ -401,61 +423,11 @@ export function ChatPage() {
       }}>
         {selectedConversation ? (
           <>
-            {/* Chat Header */}
-            <div style={{
-              padding: '16px 24px',
-              borderBottom: `1px solid ${colors.border}`,
-              backgroundColor: colors.cardBg,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                }}>
-                  <img src={yellowLogo} alt="AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                </div>
-                <div>
-                  <h1 style={{
-                    fontFamily: "'Rajdhani', sans-serif",
-                    fontSize: '18px',
-                    fontWeight: 600,
-                    color: colors.text,
-                    letterSpacing: '0.5px',
-                    margin: 0,
-                  }}>
-                    {selectedConversation.title || 'NEW CONVERSATION'}
-                  </h1>
-                  <p style={{ fontSize: '12px', color: colors.textMuted, margin: 0 }}>
-                    AI-powered trading assistant
-                  </p>
-                </div>
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 12px',
-                backgroundColor: colors.inputBg,
-                borderRadius: '20px',
-              }}>
-                <Sparkles size={14} color="#FEC00F" />
-                <span style={{ fontSize: '12px', color: colors.textMuted }}>
-                  Context: {messages.length} messages
-                </span>
-              </div>
-            </div>
-
             {/* Messages */}
             <div style={{
               flex: 1,
-              overflow: 'auto',
+              overflowY: 'auto',
               padding: '24px',
-              backgroundColor: colors.background,
             }}>
               {messages.length === 0 ? (
                 <div style={{
@@ -472,89 +444,119 @@ export function ChatPage() {
                     borderRadius: '20px',
                     overflow: 'hidden',
                     marginBottom: '20px',
-                    opacity: 0.8,
+                    opacity: 0.6,
                   }}>
                     <img src={yellowLogo} alt="AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
-                  <h3 style={{ fontSize: '18px', color: colors.text, marginBottom: '8px' }}>
-                    How can I help you today?
-                  </h3>
-                  <p style={{ fontSize: '14px', textAlign: 'center', maxWidth: '400px' }}>
-                    Ask me about AFL code generation, trading strategies, backtest analysis, or any trading-related questions.
+                  <p style={{ fontSize: '16px', color: colors.text, marginBottom: '8px' }}>
+                    Start a conversation
+                  </p>
+                  <p style={{ fontSize: '14px' }}>
+                    Ask me anything about trading, AFL code, or create visual artifacts
                   </p>
                 </div>
               ) : (
                 <>
-                  {messages.filter(m => m && m.id && m.content !== undefined).map((message, index) => (
+                  {messages.map((message) => (
                     <div
                       key={message.id}
                       style={{
                         display: 'flex',
                         gap: '12px',
                         marginBottom: '24px',
-                        justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-                        animation: 'fadeIn 0.3s ease',
+                        animation: 'fadeIn 0.3s ease-in',
                       }}
                     >
-                      {message.role === 'assistant' && (
-                        <div style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '10px',
-                          overflow: 'hidden',
-                          flexShrink: 0,
-                        }}>
-                          <img src={yellowLogo} alt="AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        </div>
-                      )}
+                      {/* Avatar */}
                       <div style={{
-                        maxWidth: '70%',
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        flexShrink: 0,
                         display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: message.role === 'user' ? 'flex-end' : 'flex-start',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: message.role === 'user' ? colors.userBubble : 'transparent',
                       }}>
+                        {message.role === 'user' ? (
+                          <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
+                            {user?.email?.[0].toUpperCase() || 'U'}
+                          </span>
+                        ) : (
+                          <img src={yellowLogo} alt="AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                        )}
+                      </div>
+
+                      {/* Message Content */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{
                           padding: '16px 20px',
                           borderRadius: message.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
                           backgroundColor: message.role === 'user' ? colors.userBubble : colors.assistantBubble,
-                          color: message.role === 'user' ? '#212121' : colors.text,
+                          color: message.role === 'user' ? '#ffffff' : colors.text,
                           fontSize: '14px',
-                          lineHeight: 1.7,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                          lineHeight: '1.6',
+                          wordWrap: 'break-word',
+                          position: 'relative',
                         }}>
-                          {renderMessageContent(message.content, message.id, message.role === 'user')}
+                          <div style={{ whiteSpace: 'pre-wrap' }}>
+                            {message.has_artifacts ? message.text : message.content}
+                          </div>
+                          
+                          {/* Copy button for assistant messages */}
+                          {message.role === 'assistant' && (
+                            <button
+                              onClick={() => handleCopy(message.content, message.id)}
+                              style={{
+                                position: 'absolute',
+                                top: '8px',
+                                right: '8px',
+                                padding: '6px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                opacity: 0.6,
+                                transition: 'all 0.2s',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.opacity = '1';
+                                e.currentTarget.style.backgroundColor = colors.inputBg;
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.opacity = '0.6';
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                              }}
+                            >
+                              {copiedId === message.id ? (
+                                <Check size={14} color="#4CAF50" />
+                              ) : (
+                                <Copy size={14} color={colors.text} />
+                              )}
+                            </button>
+                          )}
                         </div>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          marginTop: '6px',
-                          fontSize: '11px',
-                          color: colors.textMuted,
-                        }}>
-                          <Clock size={12} />
-                          {formatTime(message.created_at)}
-                        </div>
+
+                        {/* Render artifacts if present */}
+                        {message.has_artifacts && message.artifacts && message.artifacts.length > 0 && (
+                          <div>
+                            {message.artifacts.map((artifact, idx) => (
+                              <ArtifactRenderer
+                                key={`${message.id}-artifact-${idx}`}
+                                artifact={artifact}
+                                isDark={isDark}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      {message.role === 'user' && (
-                        <div style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #FEC00F 0%, #FFD740 100%)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          color: '#212121',
-                          fontSize: '14px',
-                          flexShrink: 0,
-                        }}>
-                          U
-                        </div>
-                      )}
                     </div>
                   ))}
+                  
+                  {/* Loading indicator */}
                   {loading && (
                     <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
                       <div style={{
@@ -562,6 +564,9 @@ export function ChatPage() {
                         height: '36px',
                         borderRadius: '10px',
                         overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}>
                         <img src={yellowLogo} alt="AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                       </div>
@@ -603,6 +608,34 @@ export function ChatPage() {
                 gap: '12px',
                 alignItems: 'flex-end',
               }}>
+                {/* File upload button */}
+                <button
+                  onClick={handleFileUpload}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: colors.inputBg,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FEC00F';
+                    e.currentTarget.style.borderColor = '#FEC00F';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = colors.inputBg;
+                    e.currentTarget.style.borderColor = colors.border;
+                  }}
+                >
+                  <Paperclip size={18} color={colors.textMuted} />
+                </button>
+
                 <div style={{ flex: 1, position: 'relative' }}>
                   <textarea
                     value={input}
@@ -613,7 +646,7 @@ export function ChatPage() {
                         handleSend();
                       }
                     }}
-                    placeholder="Describe your trading strategy or ask a question..."
+                    placeholder="Ask me to create a chart, diagram, or trading strategy..."
                     style={{
                       width: '100%',
                       minHeight: '56px',
@@ -707,6 +740,9 @@ export function ChatPage() {
               overflow: 'hidden',
               marginBottom: '24px',
               opacity: 0.6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}>
               <img src={yellowLogo} alt="AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
@@ -724,9 +760,6 @@ export function ChatPage() {
         @keyframes bounce {
           0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
           40% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
         }
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }

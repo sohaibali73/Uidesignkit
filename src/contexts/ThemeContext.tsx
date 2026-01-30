@@ -63,6 +63,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.style.setProperty('--accent-color', accentColor);
     document.documentElement.style.setProperty('--accent-text-color', getAccentTextColor(accentColor));
+    
+    // Also set other accent-related variables for consistency
+    document.documentElement.style.setProperty('--accent-hover', adjustColorBrightness(accentColor, 10));
+    document.documentElement.style.setProperty('--accent-light', `${accentColor}33`); // 20% opacity
+    document.documentElement.style.setProperty('--accent-lighter', `${accentColor}1A`); // 10% opacity
   }, [accentColor]);
 
   const setTheme = (newTheme: Theme) => {
@@ -113,11 +118,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const getAccentTextColor = (color: string) => {
     // Simple luminance check to determine if text should be dark or light
     const hex = color.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
+    const r = parseInt(hex.substring(0, 2), 16);  // ✅ Fixed: use substring instead of substr
+    const g = parseInt(hex.substring(2, 4), 16);  // ✅ Fixed: use substring instead of substr
+    const b = parseInt(hex.substring(4, 6), 16);  // ✅ Fixed: use substring instead of substr
     const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
     return luminance > 140 ? '#212121' : '#FFFFFF';
+  };
+
+  // Helper function to adjust color brightness
+  const adjustColorBrightness = (color: string, percent: number) => {
+    const hex = color.replace('#', '');
+    const r = Math.min(255, Math.max(0, parseInt(hex.substring(0, 2), 16) + percent));
+    const g = Math.min(255, Math.max(0, parseInt(hex.substring(2, 4), 16) + percent));
+    const b = Math.min(255, Math.max(0, parseInt(hex.substring(4, 6), 16) + percent));
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   };
 
   return (

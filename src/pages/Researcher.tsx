@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search, TrendingUp, BarChart3, Newspaper, Building, DollarSign, Settings, ArrowUpRight, ArrowDownRight, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useResearcher } from '../hooks/useResearcher';
 import { CompanyResearch, NewsItem } from '../types/researcher';

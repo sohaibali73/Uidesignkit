@@ -1,3 +1,5 @@
+
+
 export interface CompanyResearch {
   symbol: string;
   company_name: string;

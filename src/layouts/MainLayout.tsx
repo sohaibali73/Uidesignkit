@@ -16,19 +16,16 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import yellowLogo from '@/assets/yellowlogo.png';
-import blackLogo from '@/assets/blacklogo.png';
+import yellowLogo from '../assets/yellowlogo.png';
+import blackLogo from '../assets/blacklogo.png';
 
 const navItems = [
   { name: 'DASHBOARD', href: '/dashboard', icon: LayoutDashboard },
   { name: 'AFL GENERATOR', href: '/afl-generator', icon: Code2 },
   { name: 'CHAT', href: '/chat', icon: MessageCircle },
-  { name: 'RESEARCHER', href: '/researcher', icon: TrendingUp },
-  { name: 'TRAINING', href: '/training', icon: BookOpen },
   { name: 'KNOWLEDGE BASE', href: '/knowledge-base', icon: Database },
   { name: 'BACKTEST', href: '/backtest', icon: TrendingUp },
   { name: 'REVERSE ENGINEER', href: '/reverse-engineer', icon: Zap },
-  { name: 'ADMIN', href: '/admin', icon: Lock },
   { name: 'SETTINGS', href: '/settings', icon: Settings },
 ];
 

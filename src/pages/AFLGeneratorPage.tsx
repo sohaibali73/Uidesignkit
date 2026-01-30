@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Copy, Check, Download, Bug, Lightbulb, Zap, Loader2, MessageSquare } from 'lucide-react';
+import apiClient from '@/lib/api';
 import FeedbackModal from '@/components/FeedbackModal';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://0.0.0.0:8000';
 
 export function AFLGeneratorPage() {
   const [prompt, setPrompt] = useState('');
@@ -23,11 +22,11 @@ export function AFLGeneratorPage() {
     setError('');
     
     try {
-      const result = await api.afl.generate({
-        prompt: prompt,
-        strategy_type: strategyType,
+      const result = await apiClient.generateAFL({
+        request: prompt,
+        strategy_type: strategyType as any,
       });
-      setGeneratedCode(result.code || '// Generated code will appear here');
+      setGeneratedCode(result.afl_code || result.code || '// Generated code will appear here');
       setCodeId(result.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate code');

@@ -2,10 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables for theming */
+/* ============================================================================
+   CSS VARIABLES FOR THEMING
+   ============================================================================ */
+
 :root {
+  /* Accent Colors */
   --accent-color: #FEC00F;
   --accent-text-color: #212121;
+  
+  /* Dark Theme Colors (Default) */
   --background-color: #121212;
   --card-bg: #1E1E1E;
   --input-bg: #2A2A2A;
@@ -14,9 +20,30 @@
   --text-muted: #9E9E9E;
   --text-secondary: #757575;
   --hover-bg: #2A2A2A;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-/* Dark theme variables (default) */
+/* Light Theme Variables */
+:root:not(.dark) {
+  --background-color: #ffffff;
+  --card-bg: #f5f5f5;
+  --input-bg: #ffffff;
+  --border-color: #e0e0e0;
+  --text-color: #212121;
+  --text-muted: #757575;
+  --text-secondary: #9E9E9E;
+  --hover-bg: #e8e8e8;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Explicit Dark Theme (for consistency) */
 :root.dark {
   --accent-color: #FEC00F;
   --accent-text-color: #212121;
@@ -28,21 +55,15 @@
   --text-muted: #9E9E9E;
   --text-secondary: #757575;
   --hover-bg: #2A2A2A;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 
-/* Light theme variables */
-:root:not(.dark) {
-  --accent-color: #FEC00F;
-  --accent-text-color: #212121;
-  --background-color: #ffffff;
-  --card-bg: #f5f5f5;
-  --input-bg: #ffffff;
-  --border-color: #e0e0e0;
-  --text-color: #212121;
-  --text-muted: #757575;
-  --text-secondary: #9E9E9E;
-  --hover-bg: #e8e8e8;
-}
+/* ============================================================================
+   GLOBAL RESETS
+   ============================================================================ */
 
 * {
   margin: 0;
@@ -50,52 +71,137 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
-  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
 
 body {
   background-color: var(--background-color);
   color: var(--text-color);
-  font-family: 'Quicksand', sans-serif;
+  font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', 
+               Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  
+  /* Better font rendering */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 16px;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  text-rendering: optimizeLegibility;
 }
 
-/* iOS Safari input fixes */
+/* ============================================================================
+   FORM ELEMENTS - iOS & MOBILE OPTIMIZATIONS
+   ============================================================================ */
+
 input[type="text"],
 input[type="email"],
 input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
 textarea,
 select {
-  font-size: 16px !important;
+  /* Prevent iOS zoom on focus (16px minimum) */
+  font-size: 16px;
+  
+  /* Styling */
   border-radius: 10px;
   background-color: var(--input-bg);
   border: 1px solid var(--border-color);
   color: var(--text-color);
+  padding: 10px 14px;
+  
+  /* Remove default styling (autoprefixer will add -webkit-) */
+  appearance: none;
+  
+  /* Smooth transitions */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Remove default iOS styling */
-input[type="text"],
-input[type="email"],
-input[type="password"] {
-  -webkit-appearance: none;
-  -webkit-border-radius: 10px;
+/* Focus states */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(254, 192, 15, 0.15);
 }
 
-/* iOS home indicator safe area support */
+/* Placeholder styling */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Disabled state */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--card-bg);
+}
+
+/* ============================================================================
+   MOBILE & IOS SPECIFIC FIXES
+   ============================================================================ */
+
+/* iOS safe area support (for notch/home indicator) */
 @supports (padding: max(0px)) {
   body {
     padding-left: max(0px, env(safe-area-inset-left));
     padding-right: max(0px, env(safe-area-inset-right));
   }
+  
+  .safe-area-bottom {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
 }
 
-/* Custom scrollbar */
+/* Prevent iOS double-tap zoom delay */
+button,
+a,
+input[type="button"],
+input[type="submit"],
+label {
+  touch-action: manipulation;
+}
+
+/* Prevent unwanted text selection on UI elements */
+button,
+a,
+.no-select {
+  user-select: none;
+}
+
+/* Allow text selection in content areas */
+input,
+textarea,
+select,
+.selectable {
+  user-select: text;
+}
+
+/* Prevent callout menu on long press (iOS) */
+button,
+a,
+img {
+  -webkit-touch-callout: none;
+}
+
+/* ============================================================================
+   CUSTOM SCROLLBAR
+   ============================================================================ */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -103,35 +209,30 @@ input[type="password"] {
 
 ::-webkit-scrollbar-track {
   background: var(--card-bg);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary);
 }
 
-/* Prevent iOS double-tap zoom delay */
-button, a, input[type="button"], input[type="submit"] {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: manipulation;
-}
-
-/* Prevent text selection on long press */
+/* Firefox */
 * {
-  -webkit-user-select: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) var(--card-bg);
 }
 
-input, textarea, select {
-  -webkit-user-select: text;
-}
+/* ============================================================================
+   UTILITY CLASSES
+   ============================================================================ */
 
-/* Accent color utilities */
+/* Accent Colors */
 .accent-bg {
   background-color: var(--accent-color);
 }
@@ -146,9 +247,10 @@ input, textarea, select {
 
 .accent-hover:hover {
   background-color: var(--accent-color);
+  color: var(--accent-text-color);
 }
 
-/* Theme-aware text colors */
+/* Text Colors */
 .text-primary {
   color: var(--text-color);
 }
@@ -161,7 +263,7 @@ input, textarea, select {
   color: var(--text-secondary);
 }
 
-/* Theme-aware background colors */
+/* Background Colors */
 .bg-card {
   background-color: var(--card-bg);
 }
@@ -170,24 +272,200 @@ input, textarea, select {
   background-color: var(--input-bg);
 }
 
-/* Theme-aware borders */
+.bg-primary {
+  background-color: var(--background-color);
+}
+
+/* Border Colors */
 .border-theme {
   border-color: var(--border-color);
 }
 
+.border-accent {
+  border-color: var(--accent-color);
+}
+
+/* Hover States */
 .hover-theme:hover {
   background-color: var(--hover-bg);
 }
 
-/* Fix for React Router DOM v6.4+ */
+.hover-accent:hover {
+  background-color: var(--accent-color);
+  color: var(--accent-text-color);
+}
+
+/* Shadow Utilities */
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+/* ============================================================================
+   LAYOUT HELPERS
+   ============================================================================ */
+
+/* Fix for React Router DOM v6+ */
 #root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main content area */
+main {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
 }
 
-/* Ensure proper layout for main content */
-main {
-  flex: 1;
-  min-height: 100vh;
+/* Container */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
+/* Full height container */
+.full-height {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Focus visible for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Skip to main content link */
+.skip-to-main {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--accent-color);
+  color: var(--accent-text-color);
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  body {
+    background-color: white;
+    color: black;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE BREAKPOINTS
+   ============================================================================ */
+
+/* Mobile first approach - these are handled by Tailwind */
+/* But you can add custom ones here if needed */
+
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
